@@ -4817,3 +4817,53 @@ body::before {
     linear-gradient(315deg, rgba(185, 242, 209, 0.04), transparent 38%),
     rgba(18, 22, 30, 0.9);
 }
+
+/* Button contrast pass */
+.nav a,
+.nav-button,
+.language-select {
+  color: #f8fafc;
+}
+
+.nav a:hover,
+.nav-button:hover,
+.nav-button.active {
+  color: #ffd166;
+}
+
+.deploy-nav,
+.wallet-button,
+.primary-button,
+.submit-button {
+  color: #10141c;
+  background: var(--gold-gradient);
+  border-color: rgba(255, 209, 102, 0.72);
+  text-shadow: none;
+}
+
+.deploy-nav svg,
+.wallet-button svg,
+.primary-button svg,
+.submit-button svg {
+  color: #10141c;
+  stroke-width: 2.3;
+}
+
+.deploy-nav:disabled,
+.wallet-button:disabled,
+.primary-button:disabled,
+.submit-button:disabled {
+  color: rgba(248, 250, 252, 0.78);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    rgba(18, 22, 30, 0.78);
+  border-color: rgba(226, 232, 240, 0.16);
+  opacity: 1;
+}
+
+.deploy-nav:disabled svg,
+.wallet-button:disabled svg,
+.primary-button:disabled svg,
+.submit-button:disabled svg {
+  color: rgba(248, 250, 252, 0.78);
+}
