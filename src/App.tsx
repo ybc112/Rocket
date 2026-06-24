@@ -94,7 +94,7 @@ type ProjectFilter = 'all' | 'minting' | 'whitelist' | 'completed'
 
 const defaultDescriptions: Record<Language, string> = {
   zh: '',
-  en: 'Whitelist mint with automated 50/30/20 buyback burn, holder dividends, and marketing.',
+  en: '',
 }
 
 const avatarAcceptedTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'image/webp']
@@ -318,7 +318,7 @@ const copy = {
       avatarTooLarge: '图片不能超过 1MB。',
       avatarMetadataTooLarge: '头像压缩后仍然偏大，请换一张更小的图。',
       description: '代币简介（选填）',
-      descriptionPlaceholder: '简单介绍项目定位、玩法或社区信息',
+      descriptionPlaceholder: '',
       section02: '02 模板',
       templateTitle: '选择合约模板',
       section03: '03 铸造参数',
@@ -588,7 +588,7 @@ const copy = {
       avatarTooLarge: 'Image must be under 1MB.',
       avatarMetadataTooLarge: 'Avatar is still too large after compression. Use a smaller image.',
       description: 'Token intro (optional)',
-      descriptionPlaceholder: 'Briefly describe the project positioning, mechanics, or community',
+      descriptionPlaceholder: '',
       section02: '02 Template',
       templateTitle: 'Choose contract template',
       section03: '03 Mint settings',

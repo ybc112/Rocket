@@ -18,7 +18,7 @@ export const USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955'
 export const initialForm: FormState = {
   tokenName: 'Rocket Launchpad',
   symbol: 'ROCKET',
-  description: 'Whitelist mint, locked launch vault, and automated 50/30/20 buyback burn, holder dividends, and marketing on BNB Smart Chain.',
+  description: '',
   supply: '1000000',
   mintCount: '300',
   publicMintCount: '210',

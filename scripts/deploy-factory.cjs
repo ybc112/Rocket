@@ -30,7 +30,7 @@ function readOptionalAddress(name) {
 }
 
 function parseRequiredSuffix() {
-  const value = String(process.env.REQUIRED_TOKEN_SUFFIX || process.env.VITE_VANITY_SUFFIX || '88888')
+  const value = String(process.env.REQUIRED_TOKEN_SUFFIX || process.env.VITE_VANITY_SUFFIX || '8888')
     .trim()
     .replace(/^0x/i, '')
     .toLowerCase();
