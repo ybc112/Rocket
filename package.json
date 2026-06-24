@@ -11,10 +11,11 @@
     "hardhat:compile": "node scripts/compile-contracts.cjs",
     "deploy:factory:bsc": "npm run hardhat:compile && hardhat run scripts/deploy-factory.cjs --network bsc --no-compile",
     "deploy:factory:testnet": "npm run hardhat:compile && hardhat run scripts/deploy-factory.cjs --network bscTestnet --no-compile",
-    "verify:factory:bsc": "hardhat verify --network bsc",
-    "verify:factory:testnet": "hardhat verify --network bscTestnet",
+    "patch:hardhat-verify": "node scripts/patch-hardhat-verify-api-domain.cjs",
+    "verify:factory:bsc": "npm run patch:hardhat-verify && hardhat verify --network bsc",
+    "verify:factory:testnet": "npm run patch:hardhat-verify && hardhat verify --network bscTestnet",
     "verify:project:bsc": "node scripts/verify-project.cjs",
-    "contracts:verify:project": "npm run verify:project:bsc",
+    "contracts:verify:project": "npm run patch:hardhat-verify && npm run verify:project:bsc",
     "deploy:cloudflare": "npm run build && npx wrangler pages deploy dist --project-name rocket-launchpad"
   },
   "dependencies": {

@@ -137,6 +137,16 @@ function readTokenAddress() {
 
 async function verifyOne({ address, constructorArgs, constructorArgsPath, contract, label }) {
   console.log(`Verifying ${label}: ${address}`);
+  if (process.env.BSCSCAN_API_KEY || process.env.ETHERSCAN_API_KEY) {
+    try {
+      await verifyWithEtherscanV2({ address, constructorArgs, contract, label });
+      return;
+    } catch (error) {
+      console.warn(`Etherscan v2 verify failed for ${label}; retrying with Hardhat verify.`);
+      console.warn(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   try {
     await runCommand("npx", [
       "hardhat",
@@ -152,12 +162,7 @@ async function verifyOne({ address, constructorArgs, constructorArgsPath, contra
       address,
     ]);
   } catch (error) {
-    if (!process.env.BSCSCAN_API_KEY && !process.env.ETHERSCAN_API_KEY) {
-      throw error;
-    }
-    console.warn(`Hardhat verify failed for ${label}; retrying with Etherscan v2 API.`);
-    console.warn(error instanceof Error ? error.message : String(error));
-    await verifyWithEtherscanV2({ address, constructorArgs, contract, label });
+    throw error;
   }
 }
 
@@ -177,7 +182,7 @@ async function verifyWithEtherscanV2({ address, constructorArgs, contract, label
   const apiUrl =
     process.env.ETHERSCAN_V2_API_URL ||
     process.env.BSCSCAN_API_URL ||
-    "https://api.etherscan.io/v2/api";
+    "https://api.etherscan.com/v2/api";
   const apiKey = process.env.ETHERSCAN_API_KEY || process.env.BSCSCAN_API_KEY || "";
   const verifyChainId = String(process.env.ETHERSCAN_CHAIN_ID || process.env.BSCSCAN_CHAIN_ID || chainId);
   const apiQuery = { chainid: verifyChainId };
