@@ -57,7 +57,8 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
     address public liquidityRouter;
     address public tokenDeployer;
     address public vaultDeployer;
-    uint16 public immutable requiredTokenSuffix;
+    uint24 public immutable requiredTokenSuffix;
+    uint8 public immutable requiredTokenSuffixNibbles;
     address[] public allTokens;
 
     struct LaunchParams {
@@ -130,7 +131,7 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
 
     error InvalidFee();
     error InvalidParams();
-    error InvalidTokenSuffix(address token, uint16 requiredSuffix);
+    error InvalidTokenSuffix(address token, uint24 requiredSuffix);
     error ZeroAddress();
 
     event LaunchCreated(
@@ -162,7 +163,8 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
         address liquidityRouter_,
         address tokenDeployer_,
         address vaultDeployer_,
-        uint16 requiredTokenSuffix_
+        uint24 requiredTokenSuffix_,
+        uint8 requiredTokenSuffixNibbles_
     )
         Ownable(msg.sender)
     {
@@ -178,7 +180,20 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
         tokenDeployer = tokenDeployer_;
         vaultDeployer = vaultDeployer_;
         creationFee = creationFee_;
+        if (requiredTokenSuffixNibbles_ > 6) {
+            revert InvalidParams();
+        }
+        if (requiredTokenSuffixNibbles_ == 0 && requiredTokenSuffix_ != 0) {
+            revert InvalidParams();
+        }
+        if (requiredTokenSuffixNibbles_ > 0) {
+            uint256 suffixMask = (uint256(1) << (uint256(requiredTokenSuffixNibbles_) * 4)) - 1;
+            if (requiredTokenSuffix_ > suffixMask) {
+                revert InvalidParams();
+            }
+        }
         requiredTokenSuffix = requiredTokenSuffix_;
+        requiredTokenSuffixNibbles = requiredTokenSuffixNibbles_;
     }
 
     function createLaunch(LaunchParams calldata params, bytes32 salt)
@@ -406,11 +421,12 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
     }
 
     function _requireTokenSuffix(address token) private view {
-        if (requiredTokenSuffix == 0) {
+        if (requiredTokenSuffixNibbles == 0) {
             return;
         }
 
-        if (uint16(uint160(token)) != requiredTokenSuffix) {
+        uint256 suffixMask = (uint256(1) << (uint256(requiredTokenSuffixNibbles) * 4)) - 1;
+        if (uint24(uint160(token) & suffixMask) != requiredTokenSuffix) {
             revert InvalidTokenSuffix(token, requiredTokenSuffix);
         }
     }

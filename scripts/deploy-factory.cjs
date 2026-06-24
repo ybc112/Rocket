@@ -21,14 +21,18 @@ function readAddress(name, fallback) {
 }
 
 function parseRequiredSuffix() {
-  const value = String(process.env.REQUIRED_TOKEN_SUFFIX || process.env.VITE_VANITY_SUFFIX || 'eeee')
+  const value = String(process.env.REQUIRED_TOKEN_SUFFIX || process.env.VITE_VANITY_SUFFIX || '88888')
     .trim()
     .replace(/^0x/i, '')
     .toLowerCase();
-  if (!/^[0-9a-f]{1,4}$/.test(value)) {
-    throw new Error('REQUIRED_TOKEN_SUFFIX must be 1-4 hex characters.');
+  if (!/^[0-9a-f]{1,6}$/.test(value)) {
+    throw new Error('REQUIRED_TOKEN_SUFFIX must be 1-6 hex characters.');
   }
-  return Number.parseInt(value, 16);
+  return {
+    value: Number.parseInt(value, 16),
+    nibbles: value.length,
+    label: value,
+  };
 }
 
 async function maybeVerify(address, constructorArguments, contract) {
@@ -72,7 +76,7 @@ async function main() {
   console.log(`Fee recipient: ${feeRecipient}`);
   console.log(`Liquidity router: ${liquidityRouter}`);
   console.log(`Creation fee: ${creationFeeBnb} BNB (${creationFee.toString()} wei)`);
-  console.log(`Required token suffix: 0x${requiredTokenSuffix.toString(16).padStart(4, '0')}`);
+  console.log(`Required token suffix: 0x${requiredTokenSuffix.label}`);
 
   const AppleTokenDeployer = await hre.ethers.getContractFactory('AppleTokenDeployer');
   const tokenDeployer = await AppleTokenDeployer.deploy();
@@ -95,7 +99,8 @@ async function main() {
     liquidityRouter,
     tokenDeployerAddress,
     vaultDeployerAddress,
-    requiredTokenSuffix,
+    requiredTokenSuffix.value,
+    requiredTokenSuffix.nibbles,
   );
   await factory.waitForDeployment();
   const factoryAddress = await factory.getAddress();
@@ -112,7 +117,8 @@ async function main() {
     liquidityRouter,
     tokenDeployerAddress,
     vaultDeployerAddress,
-    requiredTokenSuffix,
+    requiredTokenSuffix.value,
+    requiredTokenSuffix.nibbles,
   ];
 
   const deploymentRecord = {
@@ -126,7 +132,8 @@ async function main() {
     liquidityRouter,
     creationFeeWei: creationFee.toString(),
     creationFeeBnb: hre.ethers.formatEther(creationFee),
-    requiredTokenSuffix: `0x${requiredTokenSuffix.toString(16).padStart(4, '0')}`,
+    requiredTokenSuffix: `0x${requiredTokenSuffix.label}`,
+    requiredTokenSuffixNibbles: requiredTokenSuffix.nibbles,
     deploymentTx: factoryTx?.hash || '',
     tokenDeployerDeploymentTx: tokenDeployerTx?.hash || '',
     vaultDeployerDeploymentTx: vaultDeployerTx?.hash || '',
@@ -152,7 +159,8 @@ async function main() {
       liquidityRouter,
       tokenDeployerAddress,
       vaultDeployerAddress,
-      requiredTokenSuffix,
+      requiredTokenSuffix.value,
+      requiredTokenSuffix.nibbles,
     ],
     'contracts/AppleLaunchFactory.sol:AppleLaunchFactory',
   );

@@ -4,21 +4,22 @@ import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { Worker } from "node:worker_threads";
 import {
   Contract,
   ContractFactory,
   JsonRpcProvider,
   ZeroAddress,
   getAddress,
-  getCreate2Address,
   hexlify,
   id,
   isAddress,
   keccak256,
   randomBytes,
-  solidityPackedKeccak256,
 } from "ethers";
+import { keccak_256 } from "@noble/hashes/sha3";
 
 const rootDir = process.cwd();
 const deployment = readFirstJson(
@@ -61,6 +62,10 @@ const rateWindowMs = Number(process.env.PEPE_RATE_WINDOW_MS || process.env.APPLE
 const verifyRateLimit = Number(process.env.PEPE_VERIFY_RATE_LIMIT || process.env.APPLE_VERIFY_RATE_LIMIT || 30);
 const vanityRateLimit = Number(process.env.PEPE_VANITY_RATE_LIMIT || process.env.APPLE_VANITY_RATE_LIMIT || 8);
 const assetRateLimit = Number(process.env.PEPE_ASSET_RATE_LIMIT || process.env.APPLE_ASSET_RATE_LIMIT || 20);
+const vanityWorkerCount = Math.max(
+  1,
+  Math.min(Number(process.env.VANITY_WORKERS || os.availableParallelism?.() || 1), 4),
+);
 const assetDir = path.resolve(process.env.PEPE_ASSET_DIR || process.env.APPLE_ASSET_DIR || path.join(rootDir, "work", "assets"));
 const jobs = new Map();
 const rateBuckets = new Map();
@@ -259,15 +264,15 @@ function runVerify(token) {
 }
 
 async function findVanitySalt(body) {
-  const requestedSuffix = String(body.suffix || process.env.VITE_VANITY_SUFFIX || "eeee")
+  const requestedSuffix = String(body.suffix || process.env.VITE_VANITY_SUFFIX || "88888")
     .toLowerCase()
     .replace(/^0x/, "");
   const factoryRequiredSuffix = await readFactoryRequiredSuffix();
   const suffix = factoryRequiredSuffix || requestedSuffix;
-  if (!/^[0-9a-f]{1,4}$/.test(suffix)) {
-    throw new Error("suffix must be 1-4 hex characters.");
+  if (!/^[0-9a-f]{1,6}$/.test(suffix)) {
+    throw new Error("suffix must be 1-6 hex characters.");
   }
-  if (factoryRequiredSuffix && requestedSuffix.padStart(4, "0") !== factoryRequiredSuffix) {
+  if (factoryRequiredSuffix && requestedSuffix.padStart(factoryRequiredSuffix.length, "0") !== factoryRequiredSuffix) {
     throw new Error(`factory requires token suffix ${factoryRequiredSuffix}.`);
   }
 
@@ -318,21 +323,41 @@ async function findVanitySalt(body) {
 
   const initCodeHash = keccak256(deployTx.data);
   const startedAt = Date.now();
+  const searchContext = {
+    creator,
+    name: params.name,
+    symbol: params.symbol,
+    chainId,
+    tokenDeployer,
+    initCodeHash,
+    suffix,
+  };
+  const workerMatch = await findVanitySaltInWorkers(searchContext, maxIterations);
+  if (workerMatch) {
+    return {
+      ok: true,
+      suffix,
+      salt: workerMatch.salt,
+      tokenSalt: workerMatch.tokenSalt,
+      tokenAddress: workerMatch.tokenAddress,
+      factory: factoryAddress,
+      chainId,
+      attempts: workerMatch.attempts,
+      elapsedMs: Date.now() - startedAt,
+    };
+  }
+
+  const vanitySearch = createVanitySearchContext(searchContext);
 
   for (let attempts = 1; attempts <= maxIterations; attempts += 1) {
-    const salt = hexlify(randomBytes(32));
-    const tokenSalt = solidityPackedKeccak256(
-      ["address", "bytes32", "string", "string", "uint256"],
-      [creator, salt, params.name, params.symbol, chainId],
-    );
-    const tokenAddress = getCreate2Address(tokenDeployer, tokenSalt, initCodeHash);
-    if (tokenAddress.toLowerCase().endsWith(suffix)) {
+    const match = vanitySearch(attempts);
+    if (match) {
       return {
         ok: true,
         suffix,
-        salt,
-        tokenSalt,
-        tokenAddress,
+        salt: match.salt,
+        tokenSalt: match.tokenSalt,
+        tokenAddress: match.tokenAddress,
         factory: factoryAddress,
         chainId,
         attempts,
@@ -354,7 +379,8 @@ async function findVanitySalt(body) {
 async function readFactoryRequiredSuffix() {
   try {
     const suffix = Number(await factory.requiredTokenSuffix());
-    return suffix > 0 ? suffix.toString(16).padStart(4, "0") : "";
+    const nibbles = await factory.requiredTokenSuffixNibbles().then(Number).catch(() => 6);
+    return nibbles > 0 ? suffix.toString(16).padStart(nibbles, "0") : "";
   } catch {
     return "";
   }
@@ -483,11 +509,147 @@ function mimeTypeForAsset(filename) {
 }
 
 function clampIterations(value) {
-  const nextValue = Number(value || 500000);
+  const nextValue = Number(value || 5000000);
   if (!Number.isFinite(nextValue) || nextValue <= 0) {
-    return 500000;
+    return 5000000;
   }
-  return Math.min(Math.floor(nextValue), 2000000);
+  return Math.min(Math.floor(nextValue), 50000000);
+}
+
+function findVanitySaltInWorkers(context, maxIterations) {
+  if (vanityWorkerCount <= 1 || maxIterations < 100000) {
+    return null;
+  }
+
+  return new Promise((resolve, reject) => {
+    const workers = [];
+    let settled = false;
+    let completed = 0;
+    const perWorker = Math.ceil(maxIterations / vanityWorkerCount);
+
+    const finish = (value, error = null) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      for (const worker of workers) {
+        worker.terminate().catch(() => {});
+      }
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(value);
+    };
+
+    for (let index = 0; index < vanityWorkerCount; index += 1) {
+      const start = index * perWorker + 1;
+      const count = Math.max(0, Math.min(perWorker, maxIterations - index * perWorker));
+      if (count <= 0) {
+        completed += 1;
+        continue;
+      }
+
+      const worker = new Worker(new URL("./vanity-worker.mjs", import.meta.url), {
+        workerData: {
+          ...context,
+          start,
+          count,
+        },
+      });
+      workers.push(worker);
+
+      worker.on("message", (message) => {
+        if (message?.ok) {
+          finish(message);
+          return;
+        }
+        completed += 1;
+        if (completed >= workers.length && !settled) {
+          finish(null);
+        }
+      });
+      worker.on("error", (error) => finish(null, error));
+      worker.on("exit", (code) => {
+        if (!settled && code !== 0) {
+          finish(null, new Error(`vanity worker exited with code ${code}`));
+        }
+      });
+    }
+
+    if (!workers.length) {
+      resolve(null);
+    }
+  });
+}
+
+function createVanitySearchContext({ creator, name, symbol, chainId, tokenDeployer, initCodeHash, suffix }) {
+  const seed = Buffer.from(randomBytes(24));
+  const saltBytes = Buffer.alloc(32);
+  seed.copy(saltBytes, 0);
+
+  const tokenSaltPrefix = addressBytes(creator);
+  const tokenSaltSuffix = Buffer.concat([
+    Buffer.from(name, "utf8"),
+    Buffer.from(symbol, "utf8"),
+    uint256Bytes(chainId),
+  ]);
+  const deployerBytes = addressBytes(tokenDeployer);
+  const initHashBytes = hexBytes(initCodeHash, 32);
+  const create2Input = Buffer.alloc(85);
+  create2Input[0] = 0xff;
+  deployerBytes.copy(create2Input, 1);
+  initHashBytes.copy(create2Input, 53);
+  const suffixBytes = suffix.length % 2 === 0 ? Buffer.from(suffix, "hex") : null;
+
+  return (attempts) => {
+    saltBytes.writeBigUInt64BE(BigInt(attempts), 24);
+    const tokenSalt = Buffer.from(keccak_256(Buffer.concat([tokenSaltPrefix, saltBytes, tokenSaltSuffix])));
+    tokenSalt.copy(create2Input, 21);
+    const addressBytesValue = Buffer.from(keccak_256(create2Input)).subarray(12);
+
+    if (!addressMatchesSuffix(addressBytesValue, suffix, suffixBytes)) {
+      return null;
+    }
+
+    return {
+      salt: `0x${saltBytes.toString("hex")}`,
+      tokenSalt: `0x${tokenSalt.toString("hex")}`,
+      tokenAddress: getAddress(`0x${addressBytesValue.toString("hex")}`),
+    };
+  };
+}
+
+function addressMatchesSuffix(addressBytesValue, suffix, suffixBytes) {
+  if (suffixBytes && suffixBytes.length <= addressBytesValue.length) {
+    const offset = addressBytesValue.length - suffixBytes.length;
+    for (let index = 0; index < suffixBytes.length; index += 1) {
+      if (addressBytesValue[offset + index] !== suffixBytes[index]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  return addressBytesValue.toString("hex").endsWith(suffix);
+}
+
+function addressBytes(value) {
+  return hexBytes(value, 20);
+}
+
+function hexBytes(value, expectedBytes) {
+  const hex = String(value || "").replace(/^0x/i, "");
+  if (!/^[0-9a-fA-F]+$/.test(hex) || hex.length !== expectedBytes * 2) {
+    throw new Error(`Invalid ${expectedBytes}-byte hex value.`);
+  }
+  return Buffer.from(hex, "hex");
+}
+
+function uint256Bytes(value) {
+  const bytes = Buffer.alloc(32);
+  bytes.writeBigUInt64BE(BigInt(value), 24);
+  return bytes;
 }
 
 function normalizeAddress(value) {

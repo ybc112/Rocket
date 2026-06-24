@@ -23,11 +23,11 @@ const configuredVanitySuffix = String(import.meta.env.VITE_VANITY_SUFFIX ?? '')
   .trim()
   .replace(/^0x/i, '')
   .toLowerCase()
-const DEFAULT_APP_BACKEND_URL = 'https://154.12.118.163.sslip.io'
+const DEFAULT_APP_BACKEND_URL = 'https://xueshutools.cn/apple-api'
 const configuredBackendUrl =
   String(import.meta.env.VITE_APP_BACKEND_URL ?? '').trim() || DEFAULT_APP_BACKEND_URL
 
-export const DEFAULT_LAUNCHPAD_FACTORY_ADDRESS = '0x988Cf7cb0b2AB68340769449850d8Bdf2a40DfB2'
+export const DEFAULT_LAUNCHPAD_FACTORY_ADDRESS = '0x3fe016c0DE69E59B0a9b425Dd019899E26a701f4'
 export const DEFAULT_AUDIT_REGISTRY_ADDRESS = ''
 const DEFAULT_CREATION_FEE_WEI = '5000000000000000'
 const DEFAULT_HIDDEN_PROJECT_TOKENS = [
@@ -45,7 +45,7 @@ export const launchpadConfig = {
   creationFeeWei: String(import.meta.env.VITE_LAUNCHPAD_CREATION_FEE_WEI ?? DEFAULT_CREATION_FEE_WEI),
   hiddenProjectTokens: String(import.meta.env.VITE_HIDDEN_PROJECT_TOKENS ?? ''),
   backendUrl: normalizeBackendBaseUrl(configuredBackendUrl),
-  vanitySuffix: configuredVanitySuffix && configuredVanitySuffix !== 'eeee' ? configuredVanitySuffix : 'eeee',
+  vanitySuffix: configuredVanitySuffix && configuredVanitySuffix !== 'eeee' ? configuredVanitySuffix : '88888',
   contractAdapterReady: true,
 }
 
@@ -89,7 +89,7 @@ export const launchFactoryAbi = [
   'event LaunchCreated(address indexed creator,address indexed token,address indexed vault,bytes32 templateId,string name,string symbol,uint256 totalSupply,uint256 mintCount,uint256 mintPrice,address paymentToken,bool whitelistEnabled,string metadataUri)',
   'error InvalidParams()',
   'error InvalidFee()',
-  'error InvalidTokenSuffix(address token,uint16 requiredSuffix)',
+  'error InvalidTokenSuffix(address token,uint24 requiredSuffix)',
   'error ZeroAddress()',
 ] as const
 
@@ -247,7 +247,7 @@ const messages = {
     mintEstimateFailed: '当前无法预估 Mint Gas。请确认当前钱包是否在白名单列表、公开阶段是否已开放、钱包余额是否足够，并刷新页面后重试。',
     insufficientNativeBalance: (required: string, balance: string) =>
       `钱包 BNB 不足：预计至少需要 ${required} BNB，当前余额 ${balance} BNB。`,
-    vanityUnavailable: '本次没有匹配到 EEEE 靓号地址，请重新点击部署再试一次。',
+    vanityUnavailable: '本次没有匹配到 88888 靓号地址，请重新点击部署再试一次。',
   },
   en: {
     factoryMissing: 'Launch Factory address is invalid. The current Factory address is built into the frontend source; check the default address or override config.',
@@ -280,7 +280,7 @@ const messages = {
     mintEstimateFailed: 'Unable to estimate mint gas. Check whitelist list status, public phase status, wallet balance, then refresh and try again.',
     insufficientNativeBalance: (required: string, balance: string) =>
       `Insufficient BNB balance. Estimated minimum ${required} BNB, current balance ${balance} BNB.`,
-    vanityUnavailable: 'Could not match an EEEE vanity address this time. Click deploy again to retry.',
+    vanityUnavailable: 'Could not match a 88888 vanity address this time. Click deploy again to retry.',
   },
 } as const
 
@@ -1175,7 +1175,7 @@ async function resolveLaunchSalt(
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         suffix: launchpadConfig.vanitySuffix,
-        maxIterations: 500000,
+        maxIterations: 5000000,
         creator,
         params: serializeFactoryParams(params),
       }),
@@ -1479,8 +1479,8 @@ function readLaunchPreflightMessage(error: unknown, iface: Interface, locale: La
       }
       if (parsed?.name === 'InvalidTokenSuffix') {
         return locale === 'zh'
-          ? '本次 EEEE 靓号 salt 未命中链上校验，请重新点击部署生成新的靓号参数。'
-          : 'The EEEE vanity salt did not pass the on-chain suffix check. Click deploy again to generate a new salt.'
+          ? '本次 88888 靓号 salt 未命中链上校验，请重新点击部署生成新的靓号参数。'
+          : 'The 88888 vanity salt did not pass the on-chain suffix check. Click deploy again to generate a new salt.'
       }
       if (parsed?.name === 'ZeroAddress') {
         return locale === 'zh'

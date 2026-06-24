@@ -1,18 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { AppleToken } from "./AppleToken.sol";
 import { AppleMintVault } from "./AppleMintVault.sol";
 
-contract AppleTokenDeployer is Ownable {
+contract AppleTokenDeployer {
     address public factory;
+    address private immutable _owner;
 
     error FactoryAlreadySet();
     error NotFactory();
+    error NotOwner();
     error ZeroAddress();
 
-    constructor() Ownable(msg.sender) {}
+    modifier onlyOwner() {
+        if (msg.sender != _owner) {
+            revert NotOwner();
+        }
+        _;
+    }
+
+    constructor() {
+        _owner = msg.sender;
+    }
 
     function setFactory(address factory_) external onlyOwner {
         if (factory != address(0)) {
@@ -42,14 +52,25 @@ contract AppleTokenDeployer is Ownable {
     }
 }
 
-contract AppleMintVaultDeployer is Ownable {
+contract AppleMintVaultDeployer {
     address public factory;
+    address private immutable _owner;
 
     error FactoryAlreadySet();
     error NotFactory();
+    error NotOwner();
     error ZeroAddress();
 
-    constructor() Ownable(msg.sender) {}
+    modifier onlyOwner() {
+        if (msg.sender != _owner) {
+            revert NotOwner();
+        }
+        _;
+    }
+
+    constructor() {
+        _owner = msg.sender;
+    }
 
     function setFactory(address factory_) external onlyOwner {
         if (factory != address(0)) {
