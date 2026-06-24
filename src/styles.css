@@ -4725,3 +4725,95 @@ body::before {
     grid-template-columns: 1fr;
   }
 }
+
+/* International graphite background refresh */
+:root {
+  --bg: #0d1016;
+  --bg-deep: #080a0f;
+  --panel: rgba(18, 22, 30, 0.88);
+  --panel-strong: rgba(24, 29, 39, 0.94);
+  --line: rgba(228, 176, 72, 0.24);
+  --line-soft: rgba(226, 232, 240, 0.09);
+  --text: #f8fafc;
+  --text-soft: #d8dee8;
+  --muted: #9aa4b2;
+  --accent: #e4b048;
+  --accent-2: #b9f2d1;
+  --accent-bright: #ffd166;
+  --gold-gradient: linear-gradient(135deg, #f0b84f, #ffd166 52%, #b9f2d1);
+}
+
+body {
+  color: var(--text);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(240, 184, 79, 0.11), transparent 34%),
+    radial-gradient(circle at 88% 12%, rgba(185, 242, 209, 0.075), transparent 30%),
+    linear-gradient(180deg, #10141c 0%, #0d1016 38%, #080a0f 100%);
+}
+
+body::before {
+  background-image:
+    linear-gradient(rgba(226, 232, 240, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(226, 232, 240, 0.02) 1px, transparent 1px),
+    repeating-linear-gradient(135deg, transparent 0 80px, rgba(240, 184, 79, 0.018) 80px 81px);
+  background-size: 84px 84px, 84px 84px, 220px 220px;
+  opacity: 0.9;
+}
+
+.topbar {
+  background:
+    linear-gradient(180deg, rgba(20, 24, 33, 0.94), rgba(13, 16, 22, 0.9)),
+    rgba(13, 16, 22, 0.92);
+  border-color: rgba(226, 232, 240, 0.1);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
+}
+
+.brand-mark,
+.nav a,
+.nav-button,
+.deploy-nav,
+.wallet-button,
+.language-select {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    rgba(18, 22, 30, 0.78);
+}
+
+.home-deck {
+  background:
+    linear-gradient(115deg, rgba(17, 21, 30, 0.98), rgba(24, 29, 39, 0.9) 50%, rgba(18, 25, 31, 0.92)),
+    #0d1016;
+  border-color: rgba(226, 232, 240, 0.1);
+  box-shadow: 0 34px 110px rgba(0, 0, 0, 0.42);
+}
+
+.home-deck::before {
+  background:
+    linear-gradient(90deg, transparent 0 38%, rgba(240, 184, 79, 0.065) 38% 38.16%, transparent 38.16% 68%, rgba(185, 242, 209, 0.05) 68% 68.16%, transparent 68.16%),
+    repeating-linear-gradient(90deg, transparent 0 82px, rgba(226, 232, 240, 0.018) 82px 83px),
+    repeating-linear-gradient(0deg, transparent 0 82px, rgba(226, 232, 240, 0.014) 82px 83px);
+}
+
+.status-strip,
+.project-board,
+.form-section,
+.side-card,
+.launch-steps,
+.mission-preview .side-card,
+.mission-preview .side-orbit {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.016)),
+    rgba(18, 22, 30, 0.88);
+  border-color: rgba(226, 232, 240, 0.1);
+}
+
+.launch-status-deck,
+.launch-form .form-section,
+.launch-form .form-section:nth-child(4),
+.mission-preview .side-card,
+.mission-preview .side-orbit {
+  background:
+    linear-gradient(145deg, rgba(240, 184, 79, 0.055), transparent 34%),
+    linear-gradient(315deg, rgba(185, 242, 209, 0.04), transparent 38%),
+    rgba(18, 22, 30, 0.9);
+}
