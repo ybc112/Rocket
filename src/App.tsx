@@ -1466,7 +1466,7 @@ function Header({
               ? 'Mint'
               : activePage === 'community'
                 ? 'Club'
-                : activePage === 'swap' ? 'Swap' : 'Launch'}
+                : 'Launch'}
           </small>
         </span>
       </a>
@@ -3477,11 +3477,6 @@ function readPageFromHash(): PageKey {
   return pages.includes(rawPage as PageKey) ? (rawPage as PageKey) : 'home'
 }
 
-function readSwapTokenFromHash() {
-  const query = window.location.hash.split('?')[1] ?? ''
-  return new URLSearchParams(query).get('token') ?? ''
-}
-
 function readDetailTokenFromHash() {
   const query = window.location.hash.split('?')[1] ?? ''
   return new URLSearchParams(query).get('token') ?? ''
@@ -3649,15 +3644,6 @@ function formatDisplayAmount(value: string) {
   const groupedWhole = cleanWhole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
   return cleanFraction ? `${groupedWhole}.${cleanFraction}` : groupedWhole
-}
-
-function slippageToBps(value: string) {
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed)) {
-    return 0
-  }
-
-  return Math.round(parsed * 100)
 }
 
 function shortHash(hash: string) {
