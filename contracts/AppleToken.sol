@@ -320,8 +320,9 @@ contract AppleToken is ERC20, Ownable {
 
     uint16 public constant BPS_DENOMINATOR = 10_000;
     uint16 public constant MAX_TAX_BPS = 2_500;
-    uint16 public constant PLATFORM_TAX_SHARE_BPS = 1_000;
+    uint16 public constant PLATFORM_TAX_SHARE_BPS = 0;
     uint16 public constant AUTO_BUYBACK_PROCESS_BPS = 1_000;
+    uint16 public constant MAX_SWAPBACK_PAIR_BALANCE_BPS = 50;
     uint256 public constant AUTO_BUYBACK_INTERVAL = 60 seconds;
     uint256 public constant AUTO_BUYBACK_MIN_NATIVE_BALANCE = 0.02 ether;
     address public constant LP_BLACK_HOLE = 0x000000000000000000000000000000000000dEaD;
@@ -472,7 +473,6 @@ contract AppleToken is ERC20, Ownable {
         uint256 burnedTokens,
         uint256 rewardReceived
     );
-
     modifier swapping() {
         _swapping = true;
         _;
@@ -894,11 +894,6 @@ contract AppleToken is ERC20, Ownable {
             super._update(from, address(this), collectedAmount);
         }
 
-        if (to == liquidityPair) {
-            try this.processTaxTokens() {}
-            catch {}
-        }
-
         uint256 netAmount = value - fee - airdropAmount;
         super._update(from, to, netAmount);
         _syncDividendShare(from);
@@ -936,8 +931,19 @@ contract AppleToken is ERC20, Ownable {
             return;
         }
 
+        uint256 maxSwapTokens = _maxSwapBackTokens();
+        if (maxSwapTokens == 0) {
+            return;
+        }
+
         if (contractBalance < totalTokensToProcess) {
             totalTokensToProcess = contractBalance;
+        }
+        if (totalTokensToProcess > maxSwapTokens) {
+            totalTokensToProcess = maxSwapTokens;
+        }
+        if (totalTokensToProcess < swapThreshold) {
+            return;
         }
 
         uint256 bucketTotal =
@@ -958,6 +964,14 @@ contract AppleToken is ERC20, Ownable {
 
         _swapBack(platformTokens, marketingTokens, liquidityTokens, dividendTokens, buybackTokens);
         _processAutoBuybackIfReady();
+    }
+
+    function _maxSwapBackTokens() private view returns (uint256) {
+        if (liquidityPair == address(0)) {
+            return 0;
+        }
+
+        return (balanceOf(liquidityPair) * MAX_SWAPBACK_PAIR_BALANCE_BPS) / BPS_DENOMINATOR;
     }
 
     function _selectTaxBps(
@@ -1210,12 +1224,8 @@ contract AppleToken is ERC20, Ownable {
             return;
         }
 
-        uint256 burnNative = pendingAutoBuybackNative;
-        uint256 rewardNative = pendingAutoRewardNative;
-        if (processAmount < pendingNative) {
-            burnNative = (processAmount * pendingAutoBuybackNative) / pendingNative;
-            rewardNative = processAmount - burnNative;
-        }
+        uint256 burnNative = (processAmount * pendingAutoBuybackNative) / pendingNative;
+        uint256 rewardNative = processAmount - burnNative;
 
         pendingAutoBuybackNative -= burnNative;
         pendingAutoRewardNative -= rewardNative;

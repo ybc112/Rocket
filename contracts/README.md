@@ -13,7 +13,7 @@ The active stack uses `AppleLaunchFactory`, `AppleMintVault`, and `AppleToken` n
 - `processAutoBuyback()` can be called by anyone.
 - It only runs after 60 seconds have passed since the last run and available pending BNB is at least `0.02 BNB`.
 - Each cycle processes 10% of available pending BNB.
-- The processed amount follows the project split: 50% buyback burn to `0x...dEaD`, 30% reward-token buys for holder dividends, and 20% marketing routed to the Factory treasury address.
+- The processed amount follows the project split: 70% buyback burn to `0x...dEaD` and 30% reward-token buys for holder dividends.
 
 ## Opening Price Level
 

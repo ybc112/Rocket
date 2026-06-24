@@ -98,6 +98,7 @@ async function main() {
     project.maxMintPerWallet || 0n,
     project.whitelistMintCount,
     project.whitelistEnabled,
+    project.liquidityTokenBps,
   ];
 
   console.log("Verifying project contracts");

@@ -11,6 +11,7 @@ import {
   Contract,
   ContractFactory,
   JsonRpcProvider,
+  Wallet,
   ZeroAddress,
   getAddress,
   hexlify,
@@ -53,7 +54,11 @@ const factory = new Contract(factoryAddress, factoryArtifact.abi, provider);
 const port = Number(process.env.PEPE_BACKEND_PORT || process.env.APPLE_BACKEND_PORT || 8787);
 const backendToken = process.env.PEPE_BACKEND_TOKEN || process.env.APPLE_BACKEND_TOKEN || "";
 const autoVerify = process.env.AUTO_VERIFY_PROJECTS !== "false";
+const autoProcess = process.env.AUTO_PROCESS_PROJECTS !== "false";
 const pollMs = Number(process.env.VERIFY_POLL_MS || 30000);
+const autoProcessPollMs = Number(process.env.AUTO_PROCESS_POLL_MS || 60000);
+const autoProcessGasLimit = BigInt(process.env.AUTO_PROCESS_GAS_LIMIT || 1800000);
+const autoProcessMinNative = 20_000_000_000_000_000n;
 const backfillCount = Number(process.env.VERIFY_BACKFILL_COUNT || 12);
 const verifyInitialDelayMs = Number(process.env.VERIFY_INITIAL_DELAY_MS || 20000);
 const verifyRetryDelayMs = Number(process.env.VERIFY_RETRY_DELAY_MS || 60000);
@@ -71,6 +76,21 @@ const jobs = new Map();
 const rateBuckets = new Map();
 let lastTokenCount = 0;
 let verifying = false;
+let keeperInitError = "";
+const keeperPrivateKey = String(process.env.KEEPER_PRIVATE_KEY || process.env.PRIVATE_KEY || "").trim();
+const keeperWallet = createKeeperWallet(keeperPrivateKey);
+const keeperStatus = {
+  enabled: autoProcess,
+  ready: Boolean(keeperWallet),
+  running: false,
+  pollMs: autoProcessPollMs,
+  minNativeWei: autoProcessMinNative.toString(),
+  lastRunAt: "",
+  lastError: keeperInitError,
+  lastChecked: 0,
+  lastProcessed: 0,
+  lastTx: "",
+};
 
 const server = createServer(async (request, response) => {
   try {
@@ -90,6 +110,9 @@ const server = createServer(async (request, response) => {
         requiredTokenSuffix: await readFactoryRequiredSuffix(),
         autoVerify,
         verifierReady: Boolean(process.env.BSCSCAN_API_KEY),
+        autoProcess,
+        keeperReady: Boolean(keeperWallet),
+        keeper: keeperStatus,
         queued: [...jobs.values()].filter((job) => job.status === "queued").length,
         running: [...jobs.values()].filter((job) => job.status === "running").length,
       });
@@ -147,6 +170,14 @@ server.listen(port, () => {
     void syncProjects(true);
     setInterval(() => void syncProjects(false), pollMs);
   }
+  if (autoProcess) {
+    if (keeperWallet) {
+      void runAutoProcessCycle();
+      setInterval(() => void runAutoProcessCycle(), autoProcessPollMs);
+    } else {
+      console.warn("Auto process keeper is enabled but KEEPER_PRIVATE_KEY/PRIVATE_KEY is not configured.");
+    }
+  }
 });
 
 async function syncProjects(backfill) {
@@ -160,6 +191,128 @@ async function syncProjects(backfill) {
     lastTokenCount = count;
   } catch (error) {
     console.error("Project sync failed:", error instanceof Error ? error.message : error);
+  }
+}
+
+function createKeeperWallet(privateKey) {
+  if (!autoProcess || !privateKey) {
+    return null;
+  }
+
+  try {
+    return new Wallet(privateKey, provider);
+  } catch (error) {
+    keeperInitError = error instanceof Error ? error.message : String(error);
+    console.error("Auto process keeper key is invalid:", keeperInitError);
+    return null;
+  }
+}
+
+async function runAutoProcessCycle() {
+  if (!autoProcess || !keeperWallet || keeperStatus.running) {
+    return;
+  }
+
+  keeperStatus.running = true;
+  keeperStatus.lastRunAt = new Date().toISOString();
+  keeperStatus.lastChecked = 0;
+  keeperStatus.lastProcessed = 0;
+  let lastError = "";
+
+  try {
+    const count = Number(await factory.allTokensLength());
+    for (let index = 0; index < count; index += 1) {
+      const tokenAddress = getAddress(await factory.allTokens(index));
+      keeperStatus.lastChecked += 1;
+
+      try {
+        const token = new Contract(tokenAddress, tokenArtifact.abi, keeperWallet);
+        const processState = await readTokenProcessState(token);
+        if (!processState.ready) {
+          continue;
+        }
+
+        const overrides = autoProcessGasLimit > 0n ? { gasLimit: autoProcessGasLimit } : {};
+        const tx = await token.processTaxTokens(overrides);
+        keeperStatus.lastTx = tx.hash;
+        await tx.wait(1);
+        keeperStatus.lastProcessed += 1;
+      } catch (error) {
+        lastError = `${tokenAddress}: ${error instanceof Error ? error.message : String(error)}`;
+        console.error("Auto process token failed:", lastError);
+      }
+    }
+  } catch (error) {
+    lastError = error instanceof Error ? error.message : String(error);
+    console.error("Auto process cycle failed:", lastError);
+  } finally {
+    keeperStatus.lastError = lastError;
+    keeperStatus.running = false;
+  }
+}
+
+async function readTokenProcessState(token) {
+  const [
+    tradingEnabled,
+    lastAutoBuybackAt,
+    pendingPlatformNative,
+    pendingMarketingNative,
+    pendingAutoBuybackNative,
+    pendingAutoRewardNative,
+    tokensForPlatform,
+    tokensForMarketing,
+    tokensForLiquidity,
+    tokensForDividends,
+    tokensForBuybackBurn,
+    swapThreshold,
+  ] = await Promise.all([
+    readContractBool(token, "tradingEnabled", false),
+    readContractBigInt(token, "lastAutoBuybackAt"),
+    readContractBigInt(token, "pendingPlatformNative"),
+    readContractBigInt(token, "pendingMarketingNative"),
+    readContractBigInt(token, "pendingAutoBuybackNative"),
+    readContractBigInt(token, "pendingAutoRewardNative"),
+    readContractBigInt(token, "tokensForPlatform"),
+    readContractBigInt(token, "tokensForMarketing"),
+    readContractBigInt(token, "tokensForLiquidity"),
+    readContractBigInt(token, "tokensForDividends"),
+    readContractBigInt(token, "tokensForBuybackBurn"),
+    readContractBigInt(token, "swapThreshold"),
+  ]);
+
+  if (!tradingEnabled) {
+    return { ready: false };
+  }
+
+  const pendingNative =
+    pendingPlatformNative + pendingMarketingNative + pendingAutoBuybackNative + pendingAutoRewardNative;
+  const feeTokens =
+    tokensForPlatform + tokensForMarketing + tokensForLiquidity + tokensForDividends + tokensForBuybackBurn;
+  const nowSeconds = BigInt(Math.floor(Date.now() / 1000));
+  const intervalReady = lastAutoBuybackAt === 0n || nowSeconds >= lastAutoBuybackAt + 60n;
+  const nativeReady = pendingNative >= autoProcessMinNative && intervalReady;
+  const taxSwapReady = swapThreshold > 0n && feeTokens >= swapThreshold;
+
+  return {
+    ready: nativeReady || taxSwapReady,
+    pendingNative,
+    feeTokens,
+  };
+}
+
+async function readContractBigInt(contract, method, fallback = 0n) {
+  try {
+    return BigInt(await contract[method]());
+  } catch {
+    return fallback;
+  }
+}
+
+async function readContractBool(contract, method, fallback = false) {
+  try {
+    return Boolean(await contract[method]());
+  } catch {
+    return fallback;
   }
 }
 
