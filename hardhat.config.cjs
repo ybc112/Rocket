@@ -16,6 +16,7 @@ module.exports = {
         preferWasm: true,
         settings: {
           viaIR: true,
+          evmVersion: 'cancun',
           optimizer: {
             enabled: true,
             runs: 1,
@@ -38,7 +39,7 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: process.env.BSCSCAN_API_KEY || '',
+    apiKey: process.env.ETHERSCAN_API_KEY || process.env.BSCSCAN_API_KEY || '',
     customChains: [],
   },
   sourcify: {

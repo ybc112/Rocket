@@ -74,6 +74,7 @@ const input = {
   ),
   settings: {
     viaIR: true,
+    evmVersion: 'cancun',
     optimizer: {
       enabled: true,
       runs: 1,

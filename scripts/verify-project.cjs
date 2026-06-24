@@ -140,6 +140,8 @@ async function verifyOne({ address, constructorArgs, constructorArgsPath, contra
   try {
     await runCommand("npx", [
       "hardhat",
+      "--config",
+      "hardhat.config.cjs",
       "verify",
       "--network",
       networkName,
@@ -172,14 +174,18 @@ async function verifyWithEtherscanV2({ address, constructorArgs, contract, label
     ? buildInfo.solcLongVersion
     : `v${buildInfo.solcLongVersion}`;
   const encodedArgs = encodeConstructorArgs(artifact.abi, constructorArgs);
-  const apiUrl = process.env.ETHERSCAN_V2_API_URL || "https://api.etherscan.io/v2/api";
+  const apiUrl =
+    process.env.ETHERSCAN_V2_API_URL ||
+    process.env.BSCSCAN_API_URL ||
+    "https://api.etherscan.io/v2/api";
   const apiKey = process.env.ETHERSCAN_API_KEY || process.env.BSCSCAN_API_KEY || "";
   const verifyChainId = String(process.env.ETHERSCAN_CHAIN_ID || process.env.BSCSCAN_CHAIN_ID || chainId);
+  const apiQuery = { chainid: verifyChainId };
 
   const submit = await requestJson({
     method: "POST",
     url: apiUrl,
-    query: { chainid: verifyChainId },
+    query: apiQuery,
     body: {
       module: "contract",
       action: "verifysourcecode",
@@ -212,7 +218,7 @@ async function verifyWithEtherscanV2({ address, constructorArgs, contract, label
       method: "GET",
       url: apiUrl,
       query: {
-        chainid: verifyChainId,
+        ...apiQuery,
         module: "contract",
         action: "checkverifystatus",
         apikey: apiKey,
