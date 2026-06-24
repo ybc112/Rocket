@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const hre = require('hardhat');
 
-const DEFAULT_FEE_RECIPIENT = '0x8D944D45aa683BCaE0f15c8f1D479fB121aE616c';
+const DEFAULT_FEE_RECIPIENT = '0x8991B2b845DE6f8b925f96231F960Fc3B02a4971';
 const DEFAULT_PANCAKE_ROUTER = '0x10ED43C718714eb63d5aA57B78B54704E256024E';
 
 function privateKeyRequired() {
@@ -14,6 +14,15 @@ function privateKeyRequired() {
 
 function readAddress(name, fallback) {
   const value = process.env[name] || fallback;
+  if (!hre.ethers.isAddress(value)) {
+    throw new Error(`${name} is not a valid address: ${value}`);
+  }
+  return hre.ethers.getAddress(value);
+}
+
+function readOptionalAddress(name) {
+  const value = String(process.env[name] || '').trim();
+  if (!value) return '';
   if (!hre.ethers.isAddress(value)) {
     throw new Error(`${name} is not a valid address: ${value}`);
   }
@@ -78,19 +87,27 @@ async function main() {
   console.log(`Creation fee: ${creationFeeBnb} BNB (${creationFee.toString()} wei)`);
   console.log(`Required token suffix: 0x${requiredTokenSuffix.label}`);
 
-  const AppleTokenDeployer = await hre.ethers.getContractFactory('AppleTokenDeployer');
-  const tokenDeployer = await AppleTokenDeployer.deploy();
-  await tokenDeployer.waitForDeployment();
+  const existingTokenDeployer = readOptionalAddress('TOKEN_DEPLOYER_ADDRESS');
+  const tokenDeployer = existingTokenDeployer
+    ? await hre.ethers.getContractAt('AppleTokenDeployer', existingTokenDeployer)
+    : await (await hre.ethers.getContractFactory('AppleTokenDeployer')).deploy();
+  if (!existingTokenDeployer) {
+    await tokenDeployer.waitForDeployment();
+  }
   const tokenDeployerAddress = await tokenDeployer.getAddress();
-  const tokenDeployerTx = tokenDeployer.deploymentTransaction();
-  console.log(`AppleTokenDeployer deployed: ${tokenDeployerAddress}`);
+  const tokenDeployerTx = existingTokenDeployer ? null : tokenDeployer.deploymentTransaction();
+  console.log(`AppleTokenDeployer ${existingTokenDeployer ? 'reused' : 'deployed'}: ${tokenDeployerAddress}`);
 
-  const AppleMintVaultDeployer = await hre.ethers.getContractFactory('AppleMintVaultDeployer');
-  const vaultDeployer = await AppleMintVaultDeployer.deploy();
-  await vaultDeployer.waitForDeployment();
+  const existingVaultDeployer = readOptionalAddress('VAULT_DEPLOYER_ADDRESS');
+  const vaultDeployer = existingVaultDeployer
+    ? await hre.ethers.getContractAt('AppleMintVaultDeployer', existingVaultDeployer)
+    : await (await hre.ethers.getContractFactory('AppleMintVaultDeployer')).deploy();
+  if (!existingVaultDeployer) {
+    await vaultDeployer.waitForDeployment();
+  }
   const vaultDeployerAddress = await vaultDeployer.getAddress();
-  const vaultDeployerTx = vaultDeployer.deploymentTransaction();
-  console.log(`AppleMintVaultDeployer deployed: ${vaultDeployerAddress}`);
+  const vaultDeployerTx = existingVaultDeployer ? null : vaultDeployer.deploymentTransaction();
+  console.log(`AppleMintVaultDeployer ${existingVaultDeployer ? 'reused' : 'deployed'}: ${vaultDeployerAddress}`);
 
   const AppleLaunchFactory = await hre.ethers.getContractFactory('AppleLaunchFactory');
   const factory = await AppleLaunchFactory.deploy(
