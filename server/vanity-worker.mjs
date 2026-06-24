@@ -1,6 +1,6 @@
 import { parentPort, workerData } from "node:worker_threads";
 import { getAddress } from "ethers";
-import { keccak_256 } from "@noble/hashes/sha3";
+import { keccak_256 } from "@noble/hashes/sha3.js";
 
 const search = createVanitySearchContext(workerData);
 let found = null;

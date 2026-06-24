@@ -18,7 +18,7 @@ export const USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955'
 export const initialForm: FormState = {
   tokenName: 'Rocket Launchpad',
   symbol: 'ROCKET',
-  description: 'Whitelist mint, locked launch vault, and automated 70/30 buyback burn plus holder dividends on BNB Smart Chain.',
+  description: 'Whitelist mint, locked launch vault, and automated 50/30/20 buyback burn, holder dividends, and marketing on BNB Smart Chain.',
   supply: '1000000',
   mintCount: '300',
   publicMintCount: '210',
@@ -35,10 +35,10 @@ export const initialForm: FormState = {
 }
 
 export const initialAllocation: AllocationState = {
-  marketing: 0,
+  marketing: 20,
   liquidity: 0,
   rewards: 30,
-  burn: 70,
+  burn: 50,
 }
 
 export const templates: LaunchTemplate[] = [
@@ -63,11 +63,11 @@ export const templates: LaunchTemplate[] = [
   {
     id: 'buyback',
     name: 'Auto Buyback',
-    tag: '70/30',
+    tag: '50/30/20',
     fee: '0.005 BNB',
-    summary: 'Routes the burn split into a BNB buyback pool with 60-second processing cycles, burn-side buybacks, and holder dividends.',
+    summary: 'Routes tax into a 50% buyback burn pool, 30% holder dividends, and 20% marketing treasury flow.',
     bestFor: 'Whitelist launches, auto buyback tokens, holder reward communities',
-    checks: ['Buy/sell tax', '70% buyback burn', '30% holder dividends', 'Whitelist vault'],
+    checks: ['Buy/sell tax', '50% buyback burn', '30% holder dividends', '20% marketing', 'Whitelist vault'],
   },
   {
     id: 'nftReward',
@@ -89,13 +89,13 @@ export const allocationMeta: Array<{
   {
     key: 'burn',
     label: 'Buyback burn',
-    hint: '70% burn side',
+    hint: '50% burn side',
     color: '#d4af37',
   },
   {
     key: 'marketing',
     label: 'Treasury',
-    hint: 'sent to receiver',
+    hint: 'sent to treasury',
     color: '#27ae60',
   },
   {

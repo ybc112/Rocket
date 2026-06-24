@@ -1147,7 +1147,7 @@ contract AppleToken is ERC20, Ownable {
             }
             if (nativeForMarketing > 0) {
                 totalMarketingRouted += nativeForMarketing;
-                _sendNative(receiver, nativeForMarketing);
+                _sendNative(platformFeeReceiver, nativeForMarketing);
             }
             if (liquidityHalf > 0 && nativeForLiquidity > 0) {
                 _addLiquidity(liquidityHalf, nativeForLiquidity);

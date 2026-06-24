@@ -19,7 +19,7 @@ import {
   keccak256,
   randomBytes,
 } from "ethers";
-import { keccak_256 } from "@noble/hashes/sha3";
+import { keccak_256 } from "@noble/hashes/sha3.js";
 
 const rootDir = process.cwd();
 const deployment = readFirstJson(

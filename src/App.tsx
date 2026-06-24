@@ -26,6 +26,7 @@ import { isAddress } from 'ethers'
 import {
   BNB_CHAIN,
   USDT_ADDRESS,
+  ZERO_ADDRESS,
   allocationMeta,
   initialAllocation,
   initialForm,
@@ -93,7 +94,7 @@ type ProjectFilter = 'all' | 'minting' | 'whitelist' | 'completed'
 
 const defaultDescriptions: Record<Language, string> = {
   zh: '',
-  en: 'Whitelist mint with automated 70/30 buyback burn and holder dividends.',
+  en: 'Whitelist mint with automated 50/30/20 buyback burn, holder dividends, and marketing.',
 }
 
 const avatarAcceptedTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'image/webp']
@@ -430,21 +431,21 @@ const copy = {
       eyebrow: `${appName} Launch Protocol`,
       title: 'Institutional-grade token launches on BNB Chain',
       subtitle:
-        'Deploy ERC20 tokens with whitelist mint vaults, automated 70/30 buyback burn and holder dividend mechanics. Every launch is governed by auditable on-chain smart contracts.',
+        'Deploy ERC20 tokens with whitelist mint vaults, automated 50/30/20 buyback burn, holder dividend, and marketing mechanics. Every launch is governed by auditable on-chain smart contracts.',
       launch: 'Deploy token',
       openCommunity: 'Mission control',
       consoleAria: 'Rocket launch flow',
       consoleStats: [
         ['Ticker', appSymbol, '1,000,000'],
         ['Mints', '300', '0.01 BNB'],
-        ['Tax', '3 / 3', '70 burn / 30 rewards'],
+        ['Tax', '3 / 3', '50 burn / 30 rewards / 20 marketing'],
         ['Mode', 'Whitelist', 'Auto buyback'],
       ],
       consoleFlow: ['Wallet', 'Factory', 'Token + Vault'],
       features: [
         ['01 Issuance', '0.005 BNB deployment fee', 'Submit a real on-chain deployment transaction through the verified Factory contract. Confirmed projects are recorded in the launch registry.'],
         ['02 Whitelist mint', 'Independent Token + Vault', 'Each project deploys its own ERC20 and mint vault. Whitelisted wallets mint during the private phase before public mint opens.'],
-        ['03 Auto buyback', '70% burn / 30% dividends', 'Tax flow accumulates BNB, processes 10% per 60-second cycle above the 0.02 BNB floor, then routes 70% to buyback burn and 30% to holder rewards.'],
+        ['03 Auto buyback', '50% burn / 30% dividends / 20% marketing', 'Tax flow accumulates BNB, processes 10% per 60-second cycle above the 0.02 BNB floor, then routes 50% to buyback burn, 30% to holder rewards, and 20% to marketing treasury.'],
       ],
     },
     projects: {
@@ -571,7 +572,7 @@ const copy = {
       factoryUnset: 'Not configured',
       section01: '01 Basics',
       title: 'Configure a token launch',
-      intro: 'Set the mint parameters, whitelist gate, launch taxes, and 70/30 auto buyback dividend flow.',
+      intro: 'Set the mint parameters, whitelist gate, launch taxes, and 50/30/20 auto buyback dividend marketing flow.',
       feeBadge: 'Deployment fee 0.005 BNB',
       tokenName: 'Token name',
       tokenNamePlaceholder: 'Enter token name',
@@ -615,7 +616,7 @@ const copy = {
       receiverWallet: 'Receiver wallet',
       rewardToken: 'Holder reward token',
       rewardTokenPlaceholder: 'Blank defaults to USDT',
-      rewardTokenDefault: `30% buyback-side dividends default to USDT: ${shortAddress(USDT_ADDRESS)}`,
+      rewardTokenDefault: `30% dividend-side rewards default to USDT: ${shortAddress(USDT_ADDRESS)}`,
       rewardThreshold: 'Reward threshold',
       section06: '06 Optional links',
       linksTitle: 'Community links',
@@ -683,10 +684,10 @@ const templateTranslations: Record<Language, Partial<Record<TemplateId, Partial<
     },
     buyback: {
       name: 'Auto Buyback',
-      tag: '70/30',
-      summary: 'Routes the burn split into a BNB buyback pool with 60-second processing cycles, burn-side buybacks, and holder dividends.',
+      tag: '50/30/20',
+      summary: 'Routes tax into a 50% buyback burn pool, 30% holder dividends, and 20% marketing treasury flow.',
       bestFor: 'Whitelist launches, auto buyback tokens, holder reward communities',
-      checks: ['Buy/sell tax', '70% buyback burn', '30% holder dividends', 'Whitelist vault'],
+      checks: ['Buy/sell tax', '50% buyback burn', '30% holder dividends', '20% marketing', 'Whitelist vault'],
     },
     nftReward: {
       name: 'Reward Vault',
@@ -706,10 +707,10 @@ const allocationTranslations: Record<Language, Record<AllocationKey, { label: st
     burn: { label: '销毁', hint: '减少供应' },
   },
   en: {
-    marketing: { label: 'Treasury', hint: 'sent to receiver' },
+    marketing: { label: 'Marketing', hint: 'sent to treasury' },
     liquidity: { label: 'Liquidity', hint: 'LP route' },
     rewards: { label: 'Holder dividends', hint: '30% dividend side' },
-    burn: { label: 'Buyback burn', hint: '70% burn side' },
+    burn: { label: 'Buyback burn', hint: '50% burn side' },
   },
 }
 
@@ -1616,7 +1617,7 @@ function HomePage({
           </div>
           <div className="deck-metrics" aria-label="Rocket tokenomics">
             <span>
-              <b>70%</b>
+              <b>50%</b>
               Buyback burn
             </span>
             <span>
@@ -2255,6 +2256,12 @@ function ProjectDetailPage({
   const splitTotal = project.fundFeeBps + project.lpFeeBps + project.dividendFeeBps + project.burnFeeBps
   const unallocatedBps = Math.max(0, 10_000 - splitTotal)
   const marketingSplitBps = project.fundFeeBps + unallocatedBps
+  const marketingReceiver =
+    project.platformFeeReceiver &&
+    isAddress(project.platformFeeReceiver) &&
+    project.platformFeeReceiver.toLowerCase() !== ZERO_ADDRESS.toLowerCase()
+      ? project.platformFeeReceiver
+      : project.receiver
   const taxShare = (taxBps: number, shareBps: number) => (taxBps * shareBps) / 10_000
   const visibleTaxPortion = (taxBps: number, splitBps: number) => taxShare(taxBps, splitBps)
   const portionPair = (splitBps: number) =>
@@ -2363,7 +2370,7 @@ function ProjectDetailPage({
           />
           <DetailRow
             label={text.detail.marketing}
-            value={`${portionPair(marketingSplitBps)} -> ${text.detail.toReceiver(project.receiver)}`}
+            value={`${portionPair(marketingSplitBps)} -> ${text.detail.toReceiver(marketingReceiver)}`}
           />
           <DetailRow
             label={text.detail.liquidity}
@@ -2926,7 +2933,7 @@ function LaunchPage({
                 <div className="fixed-tokenomics">
                   <div>
                     <span>Auto buyback burn</span>
-                    <strong>70%</strong>
+                    <strong>50%</strong>
                     <em>BNB buys back ROCKET and sends tokens to the dead address.</em>
                   </div>
                   <div>
@@ -2935,12 +2942,17 @@ function LaunchPage({
                     <em>BNB routes into reward-token buys and deposits to the dividend pool.</em>
                   </div>
                   <div>
+                    <span>Marketing treasury</span>
+                    <strong>20%</strong>
+                    <em>BNB routes to the fixed treasury address configured by the Factory.</em>
+                  </div>
+                  <div>
                     <span>Auto cycle</span>
                     <strong>10% / 60s</strong>
                     <em>Each cycle processes 10% of available pending BNB after the 0.02 BNB floor.</em>
                   </div>
                   <p className={allocationTotal > 100 ? 'tax-warning' : 'tax-note'}>
-                    Fixed project route: 70% buyback burn, 30% holder rewards, 0% marketing, 0% LP route.
+                    Fixed project route: 50% buyback burn, 30% holder rewards, 20% marketing treasury, 0% LP route.
                   </p>
                 </div>
               </div>
@@ -3038,13 +3050,18 @@ function LaunchPage({
             </div>
             <div>
               <span>Burn route</span>
-              <strong>70%</strong>
+              <strong>50%</strong>
               <em>BNB to dead address</em>
             </div>
             <div>
               <span>Reward route</span>
               <strong>30%</strong>
               <em>Holder dividend pool</em>
+            </div>
+            <div>
+              <span>Marketing route</span>
+              <strong>20%</strong>
+              <em>Factory treasury wallet</em>
             </div>
           </div>
           <div className="side-card">
@@ -3389,7 +3406,7 @@ function CommunityPage({
         </div>
         <div className="community-badge" aria-label="Rocket community badge">
           <strong>ROCKET</strong>
-          <span>{isZh ? '四 e 靓号 · 自动验源码 · BSC' : '70/30 buyback | whitelist mint | BSC'}</span>
+          <span>{isZh ? '四 e 靓号 · 自动验源码 · BSC' : '50/30/20 buyback | whitelist mint | BSC'}</span>
         </div>
       </section>
 
