@@ -598,6 +598,8 @@ const copy = {
       whitelistMintCount: 'Whitelist count',
       maxMintPerWallet: 'Max mint per wallet',
       mintPrice: 'Price per mint',
+      liquidityTokenPercent: 'Opening price level',
+      liquidityTokenHint: '50% matches the mint price. Below 50% opens lower; above 50% opens higher. The contract calculates LP token reserve automatically.',
       whitelistTitle: 'Whitelist mint gate',
       whitelistDesc: 'Listed wallets mint first from the Vault. Public mint opens after the whitelist allocation is filled or manually released.',
       section04: '04 Taxes and dividends',
@@ -752,6 +754,7 @@ function App() {
   const [sellTax, setSellTax] = useState(3)
   const [avatar, setAvatar] = useState('')
   const [whitelistEnabled, setWhitelistEnabled] = useState(true)
+  const [liquidityTokenPercent, setLiquidityTokenPercent] = useState('50')
   const [deployState, setDeployState] = useState<DeployState>('draft')
   const [notice, setNotice] = useState<Notice | null>(null)
   const [projects, setProjects] = useState<LaunchProject[]>([])
@@ -1031,6 +1034,7 @@ function App() {
           templateId,
           avatar,
           whitelistEnabled: whitelistEnabled || Number(form.whitelistMintCount) > 0,
+          liquidityTokenPercent,
         },
         language,
       )
@@ -1377,11 +1381,13 @@ function App() {
           form={form}
           isConfigured={isLaunchpadConfigured}
           language={language}
+          liquidityTokenPercent={liquidityTokenPercent}
           onSubmit={submitLaunch}
           onTargetNetwork={onTargetNetwork}
           sellTax={sellTax}
           setAvatar={setAvatar}
           setBuyTax={setBuyTax}
+          setLiquidityTokenPercent={setLiquidityTokenPercent}
           setSellTax={setSellTax}
           setTemplateId={setTemplateId}
           setWhitelistEnabled={setWhitelistEnabled}
@@ -2510,11 +2516,13 @@ function LaunchPage({
   form,
   isConfigured,
   language,
+  liquidityTokenPercent,
   onSubmit,
   onTargetNetwork,
   sellTax,
   setAvatar,
   setBuyTax,
+  setLiquidityTokenPercent,
   setSellTax,
   setTemplateId,
   setWhitelistEnabled,
@@ -2537,11 +2545,13 @@ function LaunchPage({
   form: FormState
   isConfigured: boolean
   language: Language
+  liquidityTokenPercent: string
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onTargetNetwork: boolean
   sellTax: number
   setAvatar: (value: string) => void
   setBuyTax: (value: number) => void
+  setLiquidityTokenPercent: (value: string) => void
   setSellTax: (value: number) => void
   setTemplateId: (value: TemplateId) => void
   setWhitelistEnabled: (value: boolean) => void
@@ -2805,6 +2815,21 @@ function LaunchPage({
                 onChange={(value) => updateForm('maxMintPerWallet', value)}
               />
               <InputField label={text.launch.mintPrice} value={form.mintPrice} onChange={(value) => updateForm('mintPrice', value)} />
+              <div className="slider-field liquidity-slider">
+                <label>
+                  <span>{text.launch.liquidityTokenPercent}</span>
+                  <strong>{liquidityTokenPercent}%</strong>
+                </label>
+                <input
+                  type="range"
+                  min="10"
+                  max="90"
+                  step="5"
+                  value={liquidityTokenPercent}
+                  onChange={(event) => setLiquidityTokenPercent(event.target.value)}
+                />
+                <small>{text.launch.liquidityTokenHint}</small>
+              </div>
             </div>
             <div className="quota-summary">
               <span>{text.launch.mintCount}</span>
@@ -3058,6 +3083,10 @@ function LaunchPage({
               <div>
                 <dt>{text.launch.maxMintPerWallet}</dt>
                 <dd>{Number(form.maxMintPerWallet || 0) > 0 ? form.maxMintPerWallet : language === 'zh' ? '不限制' : 'Unlimited'}</dd>
+              </div>
+              <div>
+                <dt>{text.launch.liquidityTokenPercent}</dt>
+                <dd>{liquidityTokenPercent}%</dd>
               </div>
               <div>
                 <dt>{text.launch.whitelist}</dt>

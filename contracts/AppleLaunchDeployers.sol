@@ -74,6 +74,7 @@ contract AppleMintVaultDeployer is Ownable {
         uint256 maxMintPerWallet,
         uint256 whitelistMintLimit,
         bool whitelistEnabled,
+        uint16 liquidityTokenBps,
         bytes32 salt
     )
         external
@@ -94,7 +95,8 @@ contract AppleMintVaultDeployer is Ownable {
             mintPrice,
             maxMintPerWallet,
             whitelistMintLimit,
-            whitelistEnabled
+            whitelistEnabled,
+            liquidityTokenBps
         ));
     }
 }

@@ -81,11 +81,11 @@ export const isLaunchpadConfigured =
   launchpadConfig.contractAdapterReady
 
 export const launchFactoryAbi = [
-  'function createLaunch((string name,string symbol,string metadataUri,uint256 totalSupply,uint256 mintCount,uint256 mintPrice,uint256 maxMintPerWallet,address paymentToken,address rewardToken,uint256 rewardThreshold,address receiver,bytes32 templateId,uint16 buyTaxBps,uint16 sellTaxBps,uint16 transferTaxBps,uint16 addLiquidityTaxBps,uint16 removeLiquidityTaxBps,uint16 launchProtectionTaxBps,uint16 launchProtectionBlocks,uint32 claimWait,uint16 fundFeeBps,uint16 lpFeeBps,uint16 dividendFeeBps,uint16 burnFeeBps,uint256 whitelistMintCount,bool whitelistEnabled) params, bytes32 salt) payable returns (address token, address vault)',
+  'function createLaunch((string name,string symbol,string metadataUri,uint256 totalSupply,uint256 mintCount,uint256 mintPrice,uint256 maxMintPerWallet,address paymentToken,address rewardToken,uint256 rewardThreshold,address receiver,bytes32 templateId,uint16 buyTaxBps,uint16 sellTaxBps,uint16 transferTaxBps,uint16 addLiquidityTaxBps,uint16 removeLiquidityTaxBps,uint16 launchProtectionTaxBps,uint16 launchProtectionBlocks,uint32 claimWait,uint16 fundFeeBps,uint16 lpFeeBps,uint16 dividendFeeBps,uint16 burnFeeBps,uint256 whitelistMintCount,bool whitelistEnabled,uint16 liquidityTokenBps) params, bytes32 salt) payable returns (address token, address vault)',
   'function allTokensLength() view returns (uint256)',
   'function allTokens(uint256) view returns (address)',
-  'function getProject(address token) view returns ((address creator,address token,address vault,address paymentToken,address receiver,address platformFeeReceiver,bytes32 templateId,uint256 totalSupply,uint256 mintCount,uint256 whitelistMintCount,uint256 publicMintCount,uint256 mintPrice,uint256 maxMintPerWallet,bool whitelistEnabled,string metadataUri,uint64 createdAt,address rewardToken,uint256 rewardThreshold,uint16 buyTaxBps,uint16 sellTaxBps,uint16 transferTaxBps,uint16 addLiquidityTaxBps,uint16 removeLiquidityTaxBps,uint16 launchProtectionTaxBps,uint16 launchProtectionBlocks,uint32 claimWait,uint16 fundFeeBps,uint16 lpFeeBps,uint16 dividendFeeBps,uint16 burnFeeBps))',
-  'function projects(address) view returns (address creator,address token,address vault,address paymentToken,address receiver,address platformFeeReceiver,bytes32 templateId,uint256 totalSupply,uint256 mintCount,uint256 whitelistMintCount,uint256 publicMintCount,uint256 mintPrice,uint256 maxMintPerWallet,bool whitelistEnabled,string metadataUri,uint64 createdAt,address rewardToken,uint256 rewardThreshold,uint16 buyTaxBps,uint16 sellTaxBps,uint16 transferTaxBps,uint16 addLiquidityTaxBps,uint16 removeLiquidityTaxBps,uint16 launchProtectionTaxBps,uint16 launchProtectionBlocks,uint32 claimWait,uint16 fundFeeBps,uint16 lpFeeBps,uint16 dividendFeeBps,uint16 burnFeeBps)',
+  'function getProject(address token) view returns ((address creator,address token,address vault,address paymentToken,address receiver,address platformFeeReceiver,bytes32 templateId,uint256 totalSupply,uint256 mintCount,uint256 whitelistMintCount,uint256 publicMintCount,uint256 mintPrice,uint256 maxMintPerWallet,bool whitelistEnabled,string metadataUri,uint64 createdAt,address rewardToken,uint256 rewardThreshold,uint16 buyTaxBps,uint16 sellTaxBps,uint16 transferTaxBps,uint16 addLiquidityTaxBps,uint16 removeLiquidityTaxBps,uint16 launchProtectionTaxBps,uint16 launchProtectionBlocks,uint32 claimWait,uint16 fundFeeBps,uint16 lpFeeBps,uint16 dividendFeeBps,uint16 burnFeeBps,uint16 liquidityTokenBps))',
+  'function projects(address) view returns (address creator,address token,address vault,address paymentToken,address receiver,address platformFeeReceiver,bytes32 templateId,uint256 totalSupply,uint256 mintCount,uint256 whitelistMintCount,uint256 publicMintCount,uint256 mintPrice,uint256 maxMintPerWallet,bool whitelistEnabled,string metadataUri,uint64 createdAt,address rewardToken,uint256 rewardThreshold,uint16 buyTaxBps,uint16 sellTaxBps,uint16 transferTaxBps,uint16 addLiquidityTaxBps,uint16 removeLiquidityTaxBps,uint16 launchProtectionTaxBps,uint16 launchProtectionBlocks,uint32 claimWait,uint16 fundFeeBps,uint16 lpFeeBps,uint16 dividendFeeBps,uint16 burnFeeBps,uint16 liquidityTokenBps)',
   'event LaunchCreated(address indexed creator,address indexed token,address indexed vault,bytes32 templateId,string name,string symbol,uint256 totalSupply,uint256 mintCount,uint256 mintPrice,address paymentToken,bool whitelistEnabled,string metadataUri)',
   'error InvalidParams()',
   'error InvalidFee()',
@@ -184,6 +184,7 @@ type FactoryLaunchParams = {
   burnFeeBps: number
   whitelistMintCount: bigint
   whitelistEnabled: boolean
+  liquidityTokenBps: number
 }
 
 type ProjectMetadata = {
@@ -935,6 +936,7 @@ export async function fetchLaunchProjects(account = ''): Promise<LaunchProject[]
     const lpFeeBps = hasNewProjectShape ? Number(project.lpFeeBps ?? project[19 + splitOffset] ?? 0) : 0
     const dividendFeeBps = hasNewProjectShape ? Number(project.dividendFeeBps ?? project[20 + splitOffset] ?? 0) : 0
     const burnFeeBps = hasNewProjectShape ? Number(project.burnFeeBps ?? project[21 + splitOffset] ?? 0) : 0
+    const liquidityTokenBps = hasAdvancedProjectShape ? Number(project.liquidityTokenBps ?? project[22 + splitOffset] ?? 5000) : 5000
 
     const token = new Contract(tokenAddress, tokenAbi, provider)
     const vault = new Contract(vaultAddress, mintVaultAbi, provider)
@@ -1046,6 +1048,7 @@ export async function fetchLaunchProjects(account = ''): Promise<LaunchProject[]
       lpFeeBps,
       dividendFeeBps,
       burnFeeBps,
+      liquidityTokenBps,
       vaultTokenBalance: formatUnits(BigInt(vaultTokenBalance), 18),
       progress,
       whitelistEnabled,
@@ -1142,6 +1145,7 @@ async function toFactoryParams(draft: LaunchDraft, locale: LaunchpadLocale): Pro
     burnFeeBps: percentToBps(draft.allocation.burn),
     whitelistMintCount: mintQuota.whitelist,
     whitelistEnabled: draft.whitelistEnabled || mintQuota.whitelist > 0n,
+    liquidityTokenBps: percentToBps(draft.liquidityTokenPercent || '50'),
   }
 }
 

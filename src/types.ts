@@ -65,6 +65,7 @@ export type LaunchDraft = {
   templateId: TemplateId
   avatar: string
   whitelistEnabled: boolean
+  liquidityTokenPercent: string
 }
 
 export type LaunchProject = {
@@ -119,6 +120,7 @@ export type LaunchProject = {
   lpFeeBps: number
   dividendFeeBps: number
   burnFeeBps: number
+  liquidityTokenBps: number
   vaultTokenBalance: string
   progress: number
   whitelistEnabled: boolean

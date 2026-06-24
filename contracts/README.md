@@ -15,6 +15,15 @@ The active stack uses `AppleLaunchFactory`, `AppleMintVault`, and `AppleToken` n
 - Each cycle processes 10% of available pending BNB.
 - The processed amount follows the project split: 70% buyback burn to `0x...dEaD` and 30% reward-token buys for holder dividends.
 
+## Opening Price Level
+
+`AppleMintVault` treats the launch slider as an opening-price level, not a literal LP-token percentage.
+
+- `50%` is the standard launch price: sale tokens and LP tokens are balanced.
+- Below `50%` opens lower than mint price.
+- Above `50%` opens higher than mint price.
+- The vault automatically calculates how many tokens stay in the LP reserve so that the LP opening price follows the selected level.
+
 Compile with:
 
 ```bash

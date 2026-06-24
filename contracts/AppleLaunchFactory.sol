@@ -30,6 +30,7 @@ interface IAppleMintVaultDeployer {
         uint256 maxMintPerWallet,
         uint256 whitelistMintLimit,
         bool whitelistEnabled,
+        uint16 liquidityTokenBps,
         bytes32 salt
     )
         external
@@ -86,6 +87,7 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
         uint16 burnFeeBps;
         uint256 whitelistMintCount;
         bool whitelistEnabled;
+        uint16 liquidityTokenBps;
     }
 
     struct Project {
@@ -119,6 +121,7 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
         uint16 lpFeeBps;
         uint16 dividendFeeBps;
         uint16 burnFeeBps;
+        uint16 liquidityTokenBps;
     }
 
     mapping(address token => Project project) public projects;
@@ -242,6 +245,7 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
             params.maxMintPerWallet,
             params.whitelistMintCount,
             params.whitelistEnabled,
+            params.liquidityTokenBps,
             keccak256(abi.encodePacked(tokenSalt, "VAULT"))
         )));
 
@@ -282,7 +286,8 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
             fundFeeBps: params.fundFeeBps,
             lpFeeBps: params.lpFeeBps,
             dividendFeeBps: params.dividendFeeBps,
-            burnFeeBps: params.burnFeeBps
+            burnFeeBps: params.burnFeeBps,
+            liquidityTokenBps: params.liquidityTokenBps
         });
         allTokens.push(token);
         _creatorTokens[msg.sender].push(token);
@@ -366,6 +371,7 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
                 || params.totalSupply == 0 || params.mintCount == 0 || params.receiver == address(0)
                 || params.mintPrice == 0 || params.totalSupply < params.mintCount
                 || params.whitelistMintCount > params.mintCount || params.paymentToken != address(0)
+                || params.liquidityTokenBps < 1_000 || params.liquidityTokenBps > 9_000
         ) {
             revert InvalidParams();
         }

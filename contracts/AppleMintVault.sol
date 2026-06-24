@@ -44,7 +44,9 @@ contract AppleMintVault is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint16 public constant BPS_DENOMINATOR = 10_000;
-    uint16 public constant LIQUIDITY_TOKEN_BPS = 5_000;
+    uint16 public constant STANDARD_OPEN_PRICE_BPS = 5_000;
+    uint16 public constant MIN_LIQUIDITY_TOKEN_BPS = 1_000;
+    uint16 public constant MAX_LIQUIDITY_TOKEN_BPS = 9_000;
     uint256 public constant REFUND_WINDOW = 24 hours;
     address public constant PERMISSION_BLACK_HOLE = 0x000000000000000000000000000000000000dEaD;
 
@@ -132,7 +134,8 @@ contract AppleMintVault is Ownable, ReentrancyGuard {
         uint256 mintPrice_,
         uint256 maxMintPerWallet_,
         uint256 whitelistMintLimit_,
-        bool whitelistEnabled_
+        bool whitelistEnabled_,
+        uint16 liquidityTokenBps_
     )
         Ownable(owner_)
     {
@@ -148,8 +151,15 @@ contract AppleMintVault is Ownable, ReentrancyGuard {
         if (paymentToken_ != address(0)) {
             revert IncorrectPayment();
         }
+        if (
+            liquidityTokenBps_ < MIN_LIQUIDITY_TOKEN_BPS
+                || liquidityTokenBps_ > MAX_LIQUIDITY_TOKEN_BPS
+        ) {
+            revert InvalidQuantity();
+        }
 
-        uint256 reserve = (totalSupply_ * LIQUIDITY_TOKEN_BPS) / BPS_DENOMINATOR;
+        uint256 reserve = (totalSupply_ * STANDARD_OPEN_PRICE_BPS)
+            / (STANDARD_OPEN_PRICE_BPS + uint256(liquidityTokenBps_));
         uint256 saleSupply = totalSupply_ - reserve;
         uint256 perMint = saleSupply / totalMints_;
         if (perMint == 0) {

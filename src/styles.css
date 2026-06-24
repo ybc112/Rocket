@@ -1856,6 +1856,36 @@ a {
   color: var(--accent);
 }
 
+.liquidity-slider {
+  grid-column: 1 / -1;
+  min-height: 96px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(90deg, rgba(212, 175, 55, 0.055), transparent 48%),
+    rgba(255, 255, 255, 0.025);
+}
+
+.liquidity-slider label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.liquidity-slider label strong {
+  color: var(--accent);
+  font-size: 22px;
+}
+
+.liquidity-slider small {
+  max-width: 520px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 input[type="range"] {
   appearance: none;
   width: 100%;
@@ -3868,8 +3898,8 @@ body::before {
 
 .deck-copy {
   display: grid;
-  align-content: end;
-  gap: 18px;
+  align-content: center;
+  gap: 16px;
   min-height: 690px;
   padding: 64px;
 }
@@ -3891,17 +3921,25 @@ body::before {
 
 .deck-metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 760px;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(90deg, rgba(212, 175, 55, 0.05), transparent 44%),
+    rgba(0, 0, 0, 0.18);
 }
 
 .deck-metrics span {
   display: grid;
-  min-height: 92px;
+  min-height: 76px;
   align-content: center;
-  gap: 6px;
-  padding: 14px;
+  gap: 4px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   color: var(--muted);
@@ -3910,11 +3948,12 @@ body::before {
     rgba(255, 255, 255, 0.02);
   font-size: 12px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .deck-metrics b {
   color: var(--accent);
-  font-size: 28px;
+  font-size: clamp(20px, 1.7vw, 26px);
   line-height: 1;
 }
 
