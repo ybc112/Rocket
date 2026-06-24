@@ -1,0 +1,22 @@
+# Rocket Launchpad
+
+Rocket Launchpad is a BNB Smart Chain mint launchpad built with Vite, React, and Hardhat.
+
+## Highlights
+
+- Whitelist mint vault with owner-managed batch allowlists.
+- English launch UI with Rocket branding and financial professional theme.
+- Default launch split: 70% buyback burn and 30% holder dividends.
+- Auto buyback checks every 60 seconds, processes 10% per cycle, and only runs when pending BNB is at least 0.02 BNB.
+- New Token deployments route the burn split into a BNB buyback pool, then buy back to the burn address and route holder dividends to the configured reward token.
+
+## Commands
+
+```bash
+npm install
+npm run hardhat:compile
+npm run build
+npm run dev
+```
+
+New contract behavior applies to newly deployed factories/tokens after compiling and deploying the updated contracts.

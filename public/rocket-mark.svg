@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Rocket Launchpad">
+  <defs>
+    <linearGradient id="hull" x1="18" x2="78" y1="78" y2="18" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#61f4c9"/>
+      <stop offset="0.5" stop-color="#4fb8ff"/>
+      <stop offset="1" stop-color="#ff5f7e"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="42" x2="56" y1="58" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff3a3"/>
+      <stop offset="1" stop-color="#ff6a3d"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="24" fill="#071019"/>
+  <path d="M54 13c11 4 21 14 26 27-5 3-12 5-20 5l-9-9c0-8 1-16 3-23Z" fill="url(#hull)"/>
+  <path d="M33 55 51 37l8 8-18 18-14 4 6-12Z" fill="#eaf7ff"/>
+  <path d="M26 58c-8 4-12 11-14 22 11-2 18-6 22-14l-8-8Z" fill="url(#flame)"/>
+  <path d="M61 45c9 0 15-1 19-5-4 11-13 22-27 30 1-6 0-12-3-17l11-8Z" fill="#132335"/>
+  <path d="M33 55c-4-3-10-4-17-3 8-14 19-23 30-27-4 4-5 10-5 19l-8 11Z" fill="#132335"/>
+  <circle cx="62" cy="34" r="7" fill="#071019"/>
+  <circle cx="62" cy="34" r="4" fill="#baf7ff"/>
+  <path d="M43 67c8-1 16-5 23-12" fill="none" stroke="#61f4c9" stroke-width="4" stroke-linecap="round"/>
+</svg>
