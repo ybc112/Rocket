@@ -78,6 +78,7 @@ import {
 } from './wallet'
 
 const pages: PageKey[] = ['home', 'launch', 'community', 'verify', 'detail']
+const appBuildId = 'rocket-20260625-factory-32949c'
 const appName = String(import.meta.env.VITE_APP_NAME ?? 'Rocket Launchpad')
 const appSymbol = String(import.meta.env.VITE_APP_SYMBOL ?? 'ROCKET')
 const factoryExplorerUrl = `${BNB_CHAIN.blockExplorerUrls[0]}/address/${launchpadConfig.factoryAddress}#code`
@@ -777,6 +778,7 @@ function App() {
 
   useEffect(() => {
     document.documentElement.lang = 'en'
+    document.documentElement.dataset.rocketBuild = appBuildId
     localStorage.setItem('rocket-launch-language', 'en')
   }, [language])
 
