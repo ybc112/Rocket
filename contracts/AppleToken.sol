@@ -1167,7 +1167,13 @@ contract AppleToken is ERC20, Ownable {
                 _addLiquidity(liquidityHalf, nativeForLiquidity);
             }
             if (nativeForRewards > 0) {
-                pendingAutoRewardNative += nativeForRewards;
+                rewardReceived = _swapNativeForReward(nativeForRewards);
+                if (rewardReceived > 0) {
+                    IERC20(rewardToken).safeTransfer(address(dividendDistributor), rewardReceived);
+                    dividendDistributor.deposit(rewardReceived);
+                    totalDividendsDeposited += rewardReceived;
+                    totalAutoBuybackRewardNative += nativeForRewards;
+                }
             }
             if (nativeForBuyback > 0) {
                 pendingAutoBuybackNative += nativeForBuyback;
@@ -1212,7 +1218,7 @@ contract AppleToken is ERC20, Ownable {
             return;
         }
 
-        uint256 pendingNative = pendingAutoBuybackNative + pendingAutoRewardNative;
+        uint256 pendingNative = pendingAutoBuybackNative;
         uint256 nativeBalance = address(this).balance;
         uint256 availableNative = pendingNative < nativeBalance ? pendingNative : nativeBalance;
         if (availableNative < AUTO_BUYBACK_MIN_NATIVE_BALANCE) {
@@ -1224,11 +1230,10 @@ contract AppleToken is ERC20, Ownable {
             return;
         }
 
-        uint256 burnNative = (processAmount * pendingAutoBuybackNative) / pendingNative;
-        uint256 rewardNative = processAmount - burnNative;
+        uint256 burnNative = processAmount;
+        uint256 rewardNative = 0;
 
         pendingAutoBuybackNative -= burnNative;
-        pendingAutoRewardNative -= rewardNative;
         lastAutoBuybackAt = block.timestamp;
 
         _executeAutoBuyback(burnNative, rewardNative);

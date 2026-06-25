@@ -18,11 +18,12 @@ The active stack uses `AppleLaunchFactory`, `AppleMintVault`, and `AppleToken` n
 ## Rocket Auto Buyback
 
 - `burnFeeBps` is routed into a buyback-burn bucket instead of direct token burn.
-- The bucket is swapped into pending BNB during tax processing.
+- `dividendFeeBps` is swapped into the reward token and deposited into the holder dividend distributor during tax processing.
+- The buyback-burn bucket is swapped into pending BNB during tax processing.
 - `processAutoBuyback()` can be called by anyone.
-- It only runs after 60 seconds have passed since the last run and available pending BNB is at least `0.02 BNB`.
-- Each cycle processes 10% of available pending BNB.
-- The processed amount follows the project split: 70% buyback burn to `0x...dEaD` and 30% reward-token buys for holder dividends.
+- It only runs after 60 seconds have passed since the last run and available buyback pending BNB is at least `0.02 BNB`.
+- Each cycle processes 10% of available buyback pending BNB and sends bought-back tokens to `0x...dEaD`.
+- The `0.02 BNB` floor does not delay holder dividend deposits.
 
 ## Opening Price Level
 
