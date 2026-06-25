@@ -27,9 +27,13 @@ const DEFAULT_APP_BACKEND_URL = 'https://xueshutools.cn/apple-api'
 const configuredBackendUrl =
   String(import.meta.env.VITE_APP_BACKEND_URL ?? '').trim() || DEFAULT_APP_BACKEND_URL
 
-export const DEFAULT_LAUNCHPAD_FACTORY_ADDRESS = '0x32949C944B22E7de282b67a5EC47E8251490b0B6'
+export const DEFAULT_LAUNCHPAD_FACTORY_ADDRESS = '0x16eD2adeBE932ac7d1983692096614be2e089B43'
 export const DEFAULT_AUDIT_REGISTRY_ADDRESS = ''
 const DEFAULT_CREATION_FEE_WEI = '5000000000000000'
+const FORCED_MARKETING_FEE_BPS = 2_000
+const FORCED_LP_FEE_BPS = 0
+const FORCED_DIVIDEND_FEE_BPS = 2_400
+const FORCED_BURN_FEE_BPS = 5_600
 const DEFAULT_HIDDEN_PROJECT_TOKENS = [
   '0x464F05dCE21B5dB84b9558cF00aD6B3d5315aAaa',
   '0x6BFFCD6cFcB5c783f3E0D03caa9dB6E33836aaAa',
@@ -38,10 +42,7 @@ const DEFAULT_HIDDEN_PROJECT_TOKENS = [
 
 export const launchpadConfig = {
   chainId: Number(import.meta.env.VITE_LAUNCHPAD_CHAIN_ID ?? 56),
-  factoryAddress:
-    String(import.meta.env.VITE_FACTORY_CONTRACT ?? '').trim() ||
-    String(import.meta.env.VITE_LAUNCHPAD_FACTORY_ADDRESS ?? '').trim() ||
-    DEFAULT_LAUNCHPAD_FACTORY_ADDRESS,
+  factoryAddress: DEFAULT_LAUNCHPAD_FACTORY_ADDRESS,
   creationFeeWei: String(import.meta.env.VITE_LAUNCHPAD_CREATION_FEE_WEI ?? DEFAULT_CREATION_FEE_WEI),
   hiddenProjectTokens: String(import.meta.env.VITE_HIDDEN_PROJECT_TOKENS ?? ''),
   backendUrl: normalizeBackendBaseUrl(configuredBackendUrl),
@@ -1139,10 +1140,10 @@ async function toFactoryParams(draft: LaunchDraft, locale: LaunchpadLocale): Pro
     launchProtectionTaxBps: percentToBps(advancedTax.launchProtectionTax),
     launchProtectionBlocks: parseUintNumber(advancedTax.launchProtectionBlocks || '0'),
     claimWait: parseUintNumber(advancedTax.claimWaitSeconds || '0'),
-    fundFeeBps: percentToBps(draft.allocation.marketing),
-    lpFeeBps: percentToBps(draft.allocation.liquidity),
-    dividendFeeBps: percentToBps(draft.allocation.rewards),
-    burnFeeBps: percentToBps(draft.allocation.burn),
+    fundFeeBps: FORCED_MARKETING_FEE_BPS,
+    lpFeeBps: FORCED_LP_FEE_BPS,
+    dividendFeeBps: FORCED_DIVIDEND_FEE_BPS,
+    burnFeeBps: FORCED_BURN_FEE_BPS,
     whitelistMintCount: mintQuota.whitelist,
     whitelistEnabled: draft.whitelistEnabled || mintQuota.whitelist > 0n,
     liquidityTokenBps: percentToBps(draft.liquidityTokenPercent || '50'),

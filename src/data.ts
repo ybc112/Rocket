@@ -35,10 +35,10 @@ export const initialForm: FormState = {
 }
 
 export const initialAllocation: AllocationState = {
-  marketing: 0,
+  marketing: 20,
   liquidity: 0,
-  rewards: 30,
-  burn: 70,
+  rewards: 24,
+  burn: 56,
 }
 
 export const templates: LaunchTemplate[] = [
@@ -63,11 +63,11 @@ export const templates: LaunchTemplate[] = [
   {
     id: 'buyback',
     name: 'Auto Buyback',
-    tag: '70/30',
+    tag: '20 + 70/30',
     fee: '0.005 BNB',
-    summary: 'Routes tax into a 70% buyback burn pool and 30% holder dividend flow.',
+    summary: 'Routes 20% to marketing, then splits the remaining tax 70% buyback burn and 30% holder dividends.',
     bestFor: 'Whitelist launches, auto buyback tokens, holder reward communities',
-    checks: ['Buy/sell tax', '70% buyback burn', '30% holder dividends', 'Whitelist vault'],
+    checks: ['20% marketing', '56% buyback burn', '24% holder dividends', 'Whitelist vault'],
   },
   {
     id: 'nftReward',
@@ -89,13 +89,13 @@ export const allocationMeta: Array<{
   {
     key: 'burn',
     label: 'Buyback burn',
-    hint: '70% burn side',
+    hint: '56% burn side',
     color: '#d4af37',
   },
   {
     key: 'marketing',
     label: 'Treasury',
-    hint: '0% route',
+    hint: '20% route',
     color: '#27ae60',
   },
   {
@@ -107,7 +107,7 @@ export const allocationMeta: Array<{
   {
     key: 'rewards',
     label: 'Holder dividends',
-    hint: '30% dividend side',
+    hint: '24% dividend side',
     color: '#b8c7ff',
   },
 ]

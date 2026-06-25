@@ -6,6 +6,15 @@ The active stack uses `AppleLaunchFactory`, `AppleMintVault`, and `AppleToken` n
 - `AppleMintVault`: handles BNB minting, whitelist mint slots, launch finalization, and refunds.
 - `AppleToken`: handles trading tax, dividend accounting, and Rocket auto buyback.
 
+## Forced Tax Split
+
+`AppleLaunchFactory` forces every new launch to use the same project split, even if callers bypass the UI:
+
+- `20%` marketing routed to the Factory `feeRecipient`.
+- `56%` buyback-burn bucket.
+- `24%` holder dividend bucket.
+- `0%` LP bucket.
+
 ## Rocket Auto Buyback
 
 - `burnFeeBps` is routed into a buyback-burn bucket instead of direct token burn.

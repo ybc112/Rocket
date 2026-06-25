@@ -50,6 +50,10 @@ interface IAppleLaunchSwapFactory {
 contract AppleLaunchFactory is Ownable, ReentrancyGuard {
     uint16 public constant BPS_DENOMINATOR = 10_000;
     uint16 public constant MAX_TAX_BPS = 2_500;
+    uint16 public constant FORCED_MARKETING_FEE_BPS = 2_000;
+    uint16 public constant FORCED_LP_FEE_BPS = 0;
+    uint16 public constant FORCED_DIVIDEND_FEE_BPS = 2_400;
+    uint16 public constant FORCED_BURN_FEE_BPS = 5_600;
     address public constant DEFAULT_REWARD_TOKEN = 0x55d398326f99059fF775485246999027B3197955;
 
     uint256 public creationFee;
@@ -211,6 +215,10 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
         address rewardToken = params.rewardToken == address(0)
             ? DEFAULT_REWARD_TOKEN
             : params.rewardToken;
+        uint16 fundFeeBps = FORCED_MARKETING_FEE_BPS;
+        uint16 lpFeeBps = FORCED_LP_FEE_BPS;
+        uint16 dividendFeeBps = FORCED_DIVIDEND_FEE_BPS;
+        uint16 burnFeeBps = FORCED_BURN_FEE_BPS;
 
         AppleToken launchToken = AppleToken(payable(IAppleTokenDeployer(tokenDeployer).deploy(
             AppleToken.LaunchConfig({
@@ -234,10 +242,10 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
                 launchProtectionTaxBps: params.launchProtectionTaxBps,
                 launchProtectionBlocks: params.launchProtectionBlocks,
                 claimWait: params.claimWait,
-                fundFeeBps: params.fundFeeBps,
-                lpFeeBps: params.lpFeeBps,
-                dividendFeeBps: params.dividendFeeBps,
-                burnFeeBps: params.burnFeeBps
+                fundFeeBps: fundFeeBps,
+                lpFeeBps: lpFeeBps,
+                dividendFeeBps: dividendFeeBps,
+                burnFeeBps: burnFeeBps
             }),
             address(this),
             tokenSalt
@@ -298,10 +306,10 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
             launchProtectionTaxBps: params.launchProtectionTaxBps,
             launchProtectionBlocks: params.launchProtectionBlocks,
             claimWait: params.claimWait,
-            fundFeeBps: params.fundFeeBps,
-            lpFeeBps: params.lpFeeBps,
-            dividendFeeBps: params.dividendFeeBps,
-            burnFeeBps: params.burnFeeBps,
+            fundFeeBps: fundFeeBps,
+            lpFeeBps: lpFeeBps,
+            dividendFeeBps: dividendFeeBps,
+            burnFeeBps: burnFeeBps,
             liquidityTokenBps: params.liquidityTokenBps
         });
         allTokens.push(token);
@@ -391,9 +399,6 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
             revert InvalidParams();
         }
 
-        uint256 splitTotal = uint256(params.fundFeeBps) + params.lpFeeBps + params.dividendFeeBps
-            + params.burnFeeBps;
-
         if (
             params.buyTaxBps > MAX_TAX_BPS || params.sellTaxBps > MAX_TAX_BPS
                 || params.transferTaxBps > MAX_TAX_BPS
@@ -401,7 +406,6 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
                 || params.removeLiquidityTaxBps > MAX_TAX_BPS
                 || params.launchProtectionTaxBps > MAX_TAX_BPS
                 || params.claimWait > 24 hours
-                || splitTotal > BPS_DENOMINATOR
         ) {
             revert InvalidParams();
         }
