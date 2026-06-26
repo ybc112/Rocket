@@ -54,7 +54,7 @@ const factory = new Contract(factoryAddress, factoryArtifact.abi, provider);
 const port = Number(process.env.PEPE_BACKEND_PORT || process.env.APPLE_BACKEND_PORT || 8787);
 const backendToken = process.env.PEPE_BACKEND_TOKEN || process.env.APPLE_BACKEND_TOKEN || "";
 const autoVerify = process.env.AUTO_VERIFY_PROJECTS !== "false";
-const autoProcess = process.env.AUTO_PROCESS_PROJECTS !== "false";
+const autoProcess = process.env.AUTO_PROCESS_PROJECTS === "true";
 const pollMs = Number(process.env.VERIFY_POLL_MS || 30000);
 const autoProcessPollMs = Number(process.env.AUTO_PROCESS_POLL_MS || 60000);
 const autoProcessGasLimit = BigInt(process.env.AUTO_PROCESS_GAS_LIMIT || 1800000);

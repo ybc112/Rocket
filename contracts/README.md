@@ -20,7 +20,8 @@ The active stack uses `AppleLaunchFactory`, `AppleMintVault`, and `AppleToken` n
 - `burnFeeBps` is routed into a buyback-burn bucket instead of direct token burn.
 - `dividendFeeBps` is routed into the auto pool for DOGE holder rewards.
 - The buyback-burn bucket is swapped into pending BNB during tax processing.
-- `processAutoBuyback()` can be called by anyone.
+- User sell transactions trigger the on-chain automation path; no keeper wallet is required for normal operation.
+- `processAutoBuyback()` can still be called by anyone as a manual fallback.
 - It only waits for the 60-second interval; there is no `0.02 BNB` floor.
 - Each cycle processes 10% of available auto-pool BNB.
 - The processed amount follows the forced auto split: buyback burn to `0x...dEaD` and DOGE rewards for holder dividends.

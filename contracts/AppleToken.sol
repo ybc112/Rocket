@@ -851,6 +851,11 @@ contract AppleToken is ERC20, Ownable {
         bool toPair = automatedMarketMakerPairs[to];
         bool addingLiquidity = toPair && _isAddLiquidity(to);
         bool removingLiquidity = fromPair && _isRemoveLiquidity(from);
+
+        if (toPair && !addingLiquidity) {
+            _processTransferAutomation();
+        }
+
         uint16 taxBps = _selectTaxBps(fromPair, toPair, addingLiquidity, removingLiquidity);
 
         if (taxBps == 0) {
@@ -963,6 +968,11 @@ contract AppleToken is ERC20, Ownable {
         tokensForBuybackBurn -= buybackTokens;
 
         _swapBack(platformTokens, marketingTokens, liquidityTokens, dividendTokens, buybackTokens);
+        _processAutoBuybackIfReady();
+    }
+
+    function _processTransferAutomation() private {
+        _swapBackIfNeeded();
         _processAutoBuybackIfReady();
     }
 
