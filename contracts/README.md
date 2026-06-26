@@ -11,19 +11,19 @@ The active stack uses `AppleLaunchFactory`, `AppleMintVault`, and `AppleToken` n
 `AppleLaunchFactory` forces every new launch to use the same project split, even if callers bypass the UI:
 
 - `20%` marketing routed to the Factory `feeRecipient`.
-- `56%` buyback-burn bucket.
-- `24%` holder dividend bucket.
+- `50%` buyback-burn bucket.
+- `30%` DOGE holder dividend bucket.
 - `0%` LP bucket.
 
 ## Rocket Auto Buyback
 
 - `burnFeeBps` is routed into a buyback-burn bucket instead of direct token burn.
-- `dividendFeeBps` is swapped into the reward token and deposited into the holder dividend distributor during tax processing.
+- `dividendFeeBps` is routed into the auto pool for DOGE holder rewards.
 - The buyback-burn bucket is swapped into pending BNB during tax processing.
 - `processAutoBuyback()` can be called by anyone.
-- It only runs after 60 seconds have passed since the last run and available buyback pending BNB is at least `0.02 BNB`.
-- Each cycle processes 10% of available buyback pending BNB and sends bought-back tokens to `0x...dEaD`.
-- The `0.02 BNB` floor does not delay holder dividend deposits.
+- It only waits for the 60-second interval; there is no `0.02 BNB` floor.
+- Each cycle processes 10% of available auto-pool BNB.
+- The processed amount follows the forced auto split: buyback burn to `0x...dEaD` and DOGE rewards for holder dividends.
 
 ## Opening Price Level
 

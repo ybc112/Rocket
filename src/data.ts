@@ -14,6 +14,7 @@ export const BNB_CHAIN = {
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955'
+export const DOGE_ADDRESS = '0xbA2aE424d960c26247Dd6c32edC70B295c744C43'
 
 export const initialForm: FormState = {
   tokenName: 'Rocket Launchpad',
@@ -37,8 +38,8 @@ export const initialForm: FormState = {
 export const initialAllocation: AllocationState = {
   marketing: 20,
   liquidity: 0,
-  rewards: 24,
-  burn: 56,
+  rewards: 30,
+  burn: 50,
 }
 
 export const templates: LaunchTemplate[] = [
@@ -63,11 +64,11 @@ export const templates: LaunchTemplate[] = [
   {
     id: 'buyback',
     name: 'Auto Buyback',
-    tag: '20 + 70/30',
+    tag: '20/50/30',
     fee: '0.005 BNB',
-    summary: 'Routes 20% to marketing, then splits the remaining tax 70% buyback burn and 30% holder dividends.',
+    summary: 'Routes 20% to marketing, 50% to buyback burn, and 30% to DOGE holder dividends.',
     bestFor: 'Whitelist launches, auto buyback tokens, holder reward communities',
-    checks: ['20% marketing', '56% buyback burn', '24% holder dividends', 'Whitelist vault'],
+    checks: ['20% marketing', '50% buyback burn', '30% DOGE dividends', 'Whitelist vault'],
   },
   {
     id: 'nftReward',
@@ -89,7 +90,7 @@ export const allocationMeta: Array<{
   {
     key: 'burn',
     label: 'Buyback burn',
-    hint: '56% burn side',
+    hint: '50% burn side',
     color: '#d4af37',
   },
   {
@@ -107,7 +108,7 @@ export const allocationMeta: Array<{
   {
     key: 'rewards',
     label: 'Holder dividends',
-    hint: '24% dividend side',
+    hint: '30% DOGE side',
     color: '#b8c7ff',
   },
 ]

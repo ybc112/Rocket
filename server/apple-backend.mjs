@@ -58,7 +58,7 @@ const autoProcess = process.env.AUTO_PROCESS_PROJECTS !== "false";
 const pollMs = Number(process.env.VERIFY_POLL_MS || 30000);
 const autoProcessPollMs = Number(process.env.AUTO_PROCESS_POLL_MS || 60000);
 const autoProcessGasLimit = BigInt(process.env.AUTO_PROCESS_GAS_LIMIT || 1800000);
-const autoProcessMinNative = 20_000_000_000_000_000n;
+const autoProcessMinNative = 0n;
 const backfillCount = Number(process.env.VERIFY_BACKFILL_COUNT || 12);
 const verifyInitialDelayMs = Number(process.env.VERIFY_INITIAL_DELAY_MS || 20000);
 const verifyRetryDelayMs = Number(process.env.VERIFY_RETRY_DELAY_MS || 60000);
@@ -290,7 +290,7 @@ async function readTokenProcessState(token) {
     tokensForPlatform + tokensForMarketing + tokensForLiquidity + tokensForDividends + tokensForBuybackBurn;
   const nowSeconds = BigInt(Math.floor(Date.now() / 1000));
   const intervalReady = lastAutoBuybackAt === 0n || nowSeconds >= lastAutoBuybackAt + 60n;
-  const nativeReady = pendingNative >= autoProcessMinNative && intervalReady;
+  const nativeReady = pendingNative > 0n && pendingNative >= autoProcessMinNative && intervalReady;
   const taxSwapReady = swapThreshold > 0n && feeTokens >= swapThreshold;
 
   return {
@@ -435,7 +435,7 @@ async function findVanitySalt(body) {
   const tokenFactory = new ContractFactory(tokenArtifact.abi, tokenArtifact.bytecode);
   const rewardToken =
     params.rewardToken === ZeroAddress
-      ? process.env.DEFAULT_REWARD_TOKEN || "0x55d398326f99059fF775485246999027B3197955"
+      ? process.env.DEFAULT_REWARD_TOKEN || "0xbA2aE424d960c26247Dd6c32edC70B295c744C43"
       : params.rewardToken;
   const [platformFeeReceiver, tokenDeployer] = await Promise.all([
     factory.feeRecipient().then((value) => getAddress(value)),

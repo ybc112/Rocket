@@ -13,7 +13,7 @@ import {
   randomBytes,
   toQuantity,
 } from 'ethers'
-import { BNB_CHAIN, USDT_ADDRESS } from '../data'
+import { BNB_CHAIN, DOGE_ADDRESS, USDT_ADDRESS } from '../data'
 import type { LaunchDraft, LaunchProject } from '../types'
 import type { EthereumProvider } from '../wallet'
 
@@ -27,13 +27,13 @@ const DEFAULT_APP_BACKEND_URL = 'https://xueshutools.cn/apple-api'
 const configuredBackendUrl =
   String(import.meta.env.VITE_APP_BACKEND_URL ?? '').trim() || DEFAULT_APP_BACKEND_URL
 
-export const DEFAULT_LAUNCHPAD_FACTORY_ADDRESS = '0x832f4FC7da44eDb2BFcC6B40f6e8A0a95C988b73'
+export const DEFAULT_LAUNCHPAD_FACTORY_ADDRESS = '0x2694d8F4b6836e2375CBAA0feDc2152847bD5D98'
 export const DEFAULT_AUDIT_REGISTRY_ADDRESS = ''
 const DEFAULT_CREATION_FEE_WEI = '5000000000000000'
 const FORCED_MARKETING_FEE_BPS = 2_000
 const FORCED_LP_FEE_BPS = 0
-const FORCED_DIVIDEND_FEE_BPS = 2_400
-const FORCED_BURN_FEE_BPS = 5_600
+const FORCED_DIVIDEND_FEE_BPS = 3_000
+const FORCED_BURN_FEE_BPS = 5_000
 const DEFAULT_HIDDEN_PROJECT_TOKENS = [
   '0x464F05dCE21B5dB84b9558cF00aD6B3d5315aAaa',
   '0x6BFFCD6cFcB5c783f3E0D03caa9dB6E33836aaAa',
@@ -1113,7 +1113,7 @@ async function toFactoryParams(draft: LaunchDraft, locale: LaunchpadLocale): Pro
   const form = draft.form
   const advancedTax = draft.advancedTax
   const paymentToken = normalizeAddress(form.paymentToken || ZeroAddress, text.paymentToken, locale)
-  const rewardToken = normalizeAddress(form.rewardToken || USDT_ADDRESS, text.rewardToken, locale)
+  const rewardToken = normalizeAddress(form.rewardToken || DOGE_ADDRESS, text.rewardToken, locale)
   const receiver = normalizeAddress(form.receiverWallet, text.receiver, locale)
   const mintPrice =
     paymentToken.toLowerCase() === ZeroAddress ? parseEther(form.mintPrice) : parseUnits(form.mintPrice, 18)
@@ -1558,7 +1558,10 @@ function getPaymentSymbol(paymentToken: string) {
     return 'BNB'
   }
 
-  return paymentToken.toLowerCase() === USDT_ADDRESS.toLowerCase() ? 'USDT' : 'TOKEN'
+  if (paymentToken.toLowerCase() === USDT_ADDRESS.toLowerCase()) {
+    return 'USDT'
+  }
+  return paymentToken.toLowerCase() === DOGE_ADDRESS.toLowerCase() ? 'DOGE' : 'TOKEN'
 }
 
 function normalizeBackendBaseUrl(value: string) {

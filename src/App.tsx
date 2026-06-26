@@ -25,6 +25,7 @@ import { type CSSProperties, type FormEvent, type ReactNode, useCallback, useEff
 import { isAddress } from 'ethers'
 import {
   BNB_CHAIN,
+  DOGE_ADDRESS,
   USDT_ADDRESS,
   ZERO_ADDRESS,
   allocationMeta,
@@ -344,8 +345,8 @@ const copy = {
       onchain: '链上记录',
       receiverWallet: '接收钱包',
       rewardToken: '分红代币地址',
-      rewardTokenPlaceholder: '留空默认 USDT',
-      rewardTokenDefault: `默认 USDT：${shortAddress(USDT_ADDRESS)}`,
+      rewardTokenPlaceholder: '留空默认 DOGE',
+      rewardTokenDefault: `默认 DOGE：${shortAddress(DOGE_ADDRESS)}`,
       rewardThreshold: '持仓门槛',
       section06: '06 可选链接',
       linksTitle: '社区入口',
@@ -446,7 +447,7 @@ const copy = {
       features: [
         ['01 Issuance', '0.005 BNB deployment fee', 'Submit a real on-chain deployment transaction through the verified Factory contract. Confirmed projects are recorded in the launch registry.'],
         ['02 Whitelist mint', 'Independent Token + Vault', 'Each project deploys its own ERC20 and mint vault. Whitelisted wallets mint during the private phase before public mint opens.'],
-        ['03 Auto buyback', '20% marketing + 56% burn + 24% dividends', 'Tax flow accumulates BNB, processes 10% per 60-second cycle above the 0.02 BNB floor, then routes the configured buyback bucket to burn and the reward bucket to holder rewards.'],
+        ['03 Auto buyback', '20% marketing + 50% burn + 30% DOGE dividends', 'Tax flow accumulates BNB, processes 10% per 60-second cycle with no BNB floor, then routes the auto pool to buyback burn and DOGE holder rewards.'],
       ],
     },
     projects: {
@@ -616,8 +617,8 @@ const copy = {
       onchain: 'On-chain record',
       receiverWallet: 'Receiver wallet',
       rewardToken: 'Holder reward token',
-      rewardTokenPlaceholder: 'Blank defaults to USDT',
-      rewardTokenDefault: `24% dividend-side rewards default to USDT: ${shortAddress(USDT_ADDRESS)}`,
+      rewardTokenPlaceholder: 'Blank defaults to DOGE',
+      rewardTokenDefault: `30% dividend-side rewards default to DOGE: ${shortAddress(DOGE_ADDRESS)}`,
       rewardThreshold: 'Reward threshold',
       section06: '06 Optional links',
       linksTitle: 'Community links',
@@ -685,10 +686,10 @@ const templateTranslations: Record<Language, Partial<Record<TemplateId, Partial<
     },
     buyback: {
       name: 'Auto Buyback',
-      tag: '20 + 70/30',
-      summary: 'Routes 20% to marketing, then splits the remaining tax 70% buyback burn and 30% holder dividends.',
+      tag: '20/50/30',
+      summary: 'Routes 20% to marketing, 50% to buyback burn, and 30% to DOGE holder dividends.',
       bestFor: 'Whitelist launches, auto buyback tokens, holder reward communities',
-      checks: ['20% marketing', '56% buyback burn', '24% holder dividends', 'Whitelist vault'],
+      checks: ['20% marketing', '50% buyback burn', '30% DOGE dividends', 'Whitelist vault'],
     },
     nftReward: {
       name: 'Reward Vault',
@@ -710,8 +711,8 @@ const allocationTranslations: Record<Language, Record<AllocationKey, { label: st
   en: {
     marketing: { label: 'Marketing', hint: '20% route' },
     liquidity: { label: 'Liquidity', hint: 'LP route' },
-    rewards: { label: 'Holder dividends', hint: '24% dividend side' },
-    burn: { label: 'Buyback burn', hint: '56% burn side' },
+    rewards: { label: 'Holder dividends', hint: '30% DOGE side' },
+    burn: { label: 'Buyback burn', hint: '50% burn side' },
   },
 }
 
@@ -1623,11 +1624,11 @@ function HomePage({
               Marketing
             </span>
             <span>
-              <b>56%</b>
+              <b>50%</b>
               Buyback burn
             </span>
             <span>
-              <b>24%</b>
+              <b>30%</b>
               Holder rewards
             </span>
             <span>
@@ -1639,7 +1640,7 @@ function HomePage({
               Buyback cycle
             </span>
             <span>
-              <b>0.02</b>
+              <b>No</b>
               BNB floor
             </span>
           </div>
@@ -2291,9 +2292,11 @@ function ProjectDetailPage({
   }
   const progress = Math.min(100, Math.max(0, project.progress))
   const unpaidDividendWei = BigInt(project.userDividendUnpaid || '0')
-  const rewardLabel = project.rewardToken.toLowerCase() === USDT_ADDRESS.toLowerCase()
-    ? 'USDT'
-    : shortAddress(project.rewardToken)
+  const rewardLabel = project.rewardToken.toLowerCase() === DOGE_ADDRESS.toLowerCase()
+    ? 'DOGE'
+    : project.rewardToken.toLowerCase() === USDT_ADDRESS.toLowerCase()
+      ? 'USDT'
+      : shortAddress(project.rewardToken)
   const dividendDisplay = `${formatDisplayAmount(project.userDividendUnpaidFormatted)} ${rewardLabel}`
 
   return (
@@ -2944,21 +2947,21 @@ function LaunchPage({
                   </div>
                   <div>
                     <span>Auto buyback burn</span>
-                    <strong>56%</strong>
+                    <strong>50%</strong>
                     <em>BNB buys back ROCKET and sends tokens to the dead address.</em>
                   </div>
                   <div>
                     <span>Holder dividends</span>
-                    <strong>24%</strong>
-                    <em>BNB routes into reward-token buys and deposits to the dividend pool.</em>
+                    <strong>30%</strong>
+                    <em>BNB routes into DOGE buys and deposits to the dividend pool.</em>
                   </div>
                   <div>
                     <span>Auto cycle</span>
                     <strong>10% / 60s</strong>
-                    <em>Each cycle processes 10% of available pending BNB after the 0.02 BNB floor.</em>
+                    <em>Each cycle processes 10% of available pending BNB with no minimum BNB floor.</em>
                   </div>
                   <p className={allocationTotal > 100 ? 'tax-warning' : 'tax-note'}>
-                    Fixed project route: 20% marketing, 56% buyback burn, 24% holder rewards, 0% LP route.
+                    Fixed project route: 20% marketing, 50% buyback burn, 30% DOGE holder rewards, 0% LP route.
                   </p>
                 </div>
               </div>
@@ -3052,7 +3055,7 @@ function LaunchPage({
             <div>
               <span>Auto buyback</span>
               <strong>10%</strong>
-              <em>Every 60s after 0.02 BNB floor</em>
+              <em>Every 60s with no BNB floor</em>
             </div>
             <div>
               <span>Marketing route</span>
@@ -3061,12 +3064,12 @@ function LaunchPage({
             </div>
             <div>
               <span>Burn route</span>
-              <strong>56%</strong>
+              <strong>50%</strong>
               <em>BNB to dead address</em>
             </div>
             <div>
               <span>Reward route</span>
-              <strong>24%</strong>
+              <strong>30%</strong>
               <em>Holder dividend pool</em>
             </div>
           </div>

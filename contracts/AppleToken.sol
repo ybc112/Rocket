@@ -324,7 +324,7 @@ contract AppleToken is ERC20, Ownable {
     uint16 public constant AUTO_BUYBACK_PROCESS_BPS = 1_000;
     uint16 public constant MAX_SWAPBACK_PAIR_BALANCE_BPS = 50;
     uint256 public constant AUTO_BUYBACK_INTERVAL = 60 seconds;
-    uint256 public constant AUTO_BUYBACK_MIN_NATIVE_BALANCE = 0.02 ether;
+    uint256 public constant AUTO_BUYBACK_MIN_NATIVE_BALANCE = 0;
     address public constant LP_BLACK_HOLE = 0x000000000000000000000000000000000000dEaD;
 
     string public projectUri;
@@ -1167,13 +1167,7 @@ contract AppleToken is ERC20, Ownable {
                 _addLiquidity(liquidityHalf, nativeForLiquidity);
             }
             if (nativeForRewards > 0) {
-                rewardReceived = _swapNativeForReward(nativeForRewards);
-                if (rewardReceived > 0) {
-                    IERC20(rewardToken).safeTransfer(address(dividendDistributor), rewardReceived);
-                    dividendDistributor.deposit(rewardReceived);
-                    totalDividendsDeposited += rewardReceived;
-                    totalAutoBuybackRewardNative += nativeForRewards;
-                }
+                pendingAutoRewardNative += nativeForRewards;
             }
             if (nativeForBuyback > 0) {
                 pendingAutoBuybackNative += nativeForBuyback;
@@ -1218,10 +1212,10 @@ contract AppleToken is ERC20, Ownable {
             return;
         }
 
-        uint256 pendingNative = pendingAutoBuybackNative;
+        uint256 pendingNative = pendingAutoBuybackNative + pendingAutoRewardNative;
         uint256 nativeBalance = address(this).balance;
         uint256 availableNative = pendingNative < nativeBalance ? pendingNative : nativeBalance;
-        if (availableNative < AUTO_BUYBACK_MIN_NATIVE_BALANCE) {
+        if (availableNative == 0 || availableNative < AUTO_BUYBACK_MIN_NATIVE_BALANCE) {
             return;
         }
 
@@ -1230,10 +1224,11 @@ contract AppleToken is ERC20, Ownable {
             return;
         }
 
-        uint256 burnNative = processAmount;
-        uint256 rewardNative = 0;
+        uint256 burnNative = (processAmount * pendingAutoBuybackNative) / pendingNative;
+        uint256 rewardNative = processAmount - burnNative;
 
         pendingAutoBuybackNative -= burnNative;
+        pendingAutoRewardNative -= rewardNative;
         lastAutoBuybackAt = block.timestamp;
 
         _executeAutoBuyback(burnNative, rewardNative);
