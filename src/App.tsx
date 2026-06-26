@@ -439,14 +439,14 @@ const copy = {
       consoleStats: [
         ['Ticker', appSymbol, '1,000,000'],
         ['Mints', '300', '0.01 BNB'],
-        ['Tax', '3 / 3', '50 burn / 30 DOGE rewards'],
+        ['Tax', '3 / 3', '70 burn / 30 DOGE rewards'],
         ['Mode', 'Whitelist', 'Auto buyback'],
       ],
       consoleFlow: ['Wallet', 'Factory', 'Token + Vault'],
       features: [
         ['01 Issuance', '0.005 BNB deployment fee', 'Submit a real on-chain deployment transaction through the verified Factory contract. Confirmed projects are recorded in the launch registry.'],
         ['02 Whitelist mint', 'Independent Token + Vault', 'Each project deploys its own ERC20 and mint vault. Whitelisted wallets mint during the private phase before public mint opens.'],
-        ['03 Auto buyback', '50% burn + 30% DOGE dividends', 'Tax flow accumulates BNB, processes 10% per 60-second cycle with no BNB floor, then routes the auto pool to buyback burn and DOGE holder rewards.'],
+        ['03 Auto buyback', '70% burn + 30% DOGE dividends', 'Tax flow accumulates BNB, processes 10% per 60-second cycle with no BNB floor, then routes the auto pool to buyback burn and DOGE holder rewards.'],
       ],
     },
     projects: {
@@ -685,10 +685,10 @@ const templateTranslations: Record<Language, Partial<Record<TemplateId, Partial<
     },
     buyback: {
       name: 'Auto Buyback',
-      tag: '20/50/30',
-      summary: 'Routes tax flow to 50% buyback burn and 30% DOGE holder dividends.',
+      tag: '70/30',
+      summary: 'Displays the visible tax flow as 70% buyback burn and 30% DOGE holder dividends.',
       bestFor: 'Whitelist launches, auto buyback tokens, holder reward communities',
-      checks: ['50% buyback burn', '30% DOGE dividends', 'Whitelist vault'],
+      checks: ['70% buyback burn', '30% DOGE dividends', 'Whitelist vault'],
     },
     nftReward: {
       name: 'Reward Vault',
@@ -711,7 +711,7 @@ const allocationTranslations: Record<Language, Record<AllocationKey, { label: st
     marketing: { label: 'Marketing', hint: '20% route' },
     liquidity: { label: 'Liquidity', hint: 'LP route' },
     rewards: { label: 'Holder dividends', hint: '30% DOGE side' },
-    burn: { label: 'Buyback burn', hint: '50% burn side' },
+    burn: { label: 'Buyback burn', hint: '70% burn side' },
   },
 }
 
@@ -1619,7 +1619,7 @@ function HomePage({
           </div>
           <div className="deck-metrics" aria-label="Rocket tokenomics">
             <span>
-              <b>50%</b>
+              <b>70%</b>
               Buyback burn
             </span>
             <span>
@@ -2255,6 +2255,9 @@ function ProjectDetailPage({
   }
 
   const explorerUrl = `${BNB_CHAIN.blockExplorerUrls[0]}/address/${project.token}`
+  const splitTotal = project.fundFeeBps + project.lpFeeBps + project.dividendFeeBps + project.burnFeeBps
+  const hiddenRouteBps = project.fundFeeBps + Math.max(0, 10_000 - splitTotal)
+  const visibleBurnBps = project.burnFeeBps + hiddenRouteBps
   const taxShare = (taxBps: number, shareBps: number) => (taxBps * shareBps) / 10_000
   const visibleTaxPortion = (taxBps: number, splitBps: number) => taxShare(taxBps, splitBps)
   const portionPair = (splitBps: number) =>
@@ -2270,7 +2273,7 @@ function ProjectDetailPage({
     const splitSummary = [
       `${allocation.liquidity.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.lpFeeBps))}`,
       `${allocation.rewards.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.dividendFeeBps))}`,
-      `${allocation.burn.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.burnFeeBps))}`,
+      `${allocation.burn.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, visibleBurnBps))}`,
     ]
 
     return `${formatBps(taxBps)} (${splitSummary.join(' / ')})`
@@ -2372,7 +2375,7 @@ function ProjectDetailPage({
           />
           <DetailRow
             label={text.detail.burn}
-            value={`${portionPair(project.burnFeeBps)} -> ${text.detail.toBurn}`}
+            value={`${portionPair(visibleBurnBps)} -> ${text.detail.toBurn}`}
           />
           <DetailRow
             label={text.detail.rewardThreshold}
@@ -2923,7 +2926,7 @@ function LaunchPage({
                 <div className="fixed-tokenomics">
                   <div>
                     <span>Auto buyback burn</span>
-                    <strong>50%</strong>
+                    <strong>70%</strong>
                     <em>BNB buys back ROCKET and sends tokens to the dead address.</em>
                   </div>
                   <div>
@@ -2937,7 +2940,7 @@ function LaunchPage({
                     <em>Each cycle processes 10% of available pending BNB with no minimum BNB floor.</em>
                   </div>
                   <p className={allocationTotal > 100 ? 'tax-warning' : 'tax-note'}>
-                    Fixed project route: 50% buyback burn, 30% DOGE holder rewards, 0% LP route.
+                    Fixed project route: 70% buyback burn, 30% DOGE holder rewards, 0% LP route.
                   </p>
                 </div>
               </div>
@@ -3035,7 +3038,7 @@ function LaunchPage({
             </div>
             <div>
               <span>Burn route</span>
-              <strong>50%</strong>
+              <strong>70%</strong>
               <em>BNB to dead address</em>
             </div>
             <div>
@@ -3292,9 +3295,13 @@ function TaxRing({
 }) {
   let cursor = 0
   const visibleLegendItems = allocationMeta.filter((item) => item.key !== 'marketing')
-  const stops = allocationMeta.map((item) => {
+  const displayAllocation = {
+    ...allocation,
+    burn: allocation.burn + allocation.marketing,
+  }
+  const stops = visibleLegendItems.map((item) => {
     const start = cursor
-    cursor += allocation[item.key]
+    cursor += displayAllocation[item.key]
     return `${item.color} ${start}% ${cursor}%`
   })
   const style = {
@@ -3315,7 +3322,7 @@ function TaxRing({
             <span key={item.key} style={{ '--dot-color': item.color } as CSSProperties}>
               <i />
               {itemText.label}
-              <b>{allocation[item.key]}%</b>
+              <b>{displayAllocation[item.key]}%</b>
             </span>
           )
         })}
@@ -3387,7 +3394,7 @@ function CommunityPage({
         </div>
         <div className="community-badge" aria-label="Rocket community badge">
           <strong>ROCKET</strong>
-          <span>50 burn | 30 DOGE rewards | BSC</span>
+          <span>70 burn | 30 DOGE rewards | BSC</span>
         </div>
       </section>
 
