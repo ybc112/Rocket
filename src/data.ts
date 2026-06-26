@@ -66,9 +66,9 @@ export const templates: LaunchTemplate[] = [
     name: 'Auto Buyback',
     tag: '20/50/30',
     fee: '0.005 BNB',
-    summary: 'Routes 20% to marketing, 50% to buyback burn, and 30% to DOGE holder dividends.',
+    summary: 'Routes tax flow to 50% buyback burn and 30% DOGE holder dividends.',
     bestFor: 'Whitelist launches, auto buyback tokens, holder reward communities',
-    checks: ['20% marketing', '50% buyback burn', '30% DOGE dividends', 'Whitelist vault'],
+    checks: ['50% buyback burn', '30% DOGE dividends', 'Whitelist vault'],
   },
   {
     id: 'nftReward',

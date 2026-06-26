@@ -27,7 +27,6 @@ import {
   BNB_CHAIN,
   DOGE_ADDRESS,
   USDT_ADDRESS,
-  ZERO_ADDRESS,
   allocationMeta,
   initialAllocation,
   initialForm,
@@ -433,21 +432,21 @@ const copy = {
       eyebrow: `${appName} Launch Protocol`,
       title: 'Institutional-grade token launches on BNB Chain',
       subtitle:
-        'Deploy ERC20 tokens with whitelist mint vaults, 20% marketing, automated buyback burn, and holder dividend mechanics. Every launch is governed by auditable on-chain smart contracts.',
+        'Deploy ERC20 tokens with whitelist mint vaults, automated buyback burn, and holder dividend mechanics. Every launch is governed by auditable on-chain smart contracts.',
       launch: 'Deploy token',
       openCommunity: 'Mission control',
       consoleAria: 'Rocket launch flow',
       consoleStats: [
         ['Ticker', appSymbol, '1,000,000'],
         ['Mints', '300', '0.01 BNB'],
-        ['Tax', '3 / 3', '20 marketing / 56 burn / 24 rewards'],
+        ['Tax', '3 / 3', '50 burn / 30 DOGE rewards'],
         ['Mode', 'Whitelist', 'Auto buyback'],
       ],
       consoleFlow: ['Wallet', 'Factory', 'Token + Vault'],
       features: [
         ['01 Issuance', '0.005 BNB deployment fee', 'Submit a real on-chain deployment transaction through the verified Factory contract. Confirmed projects are recorded in the launch registry.'],
         ['02 Whitelist mint', 'Independent Token + Vault', 'Each project deploys its own ERC20 and mint vault. Whitelisted wallets mint during the private phase before public mint opens.'],
-        ['03 Auto buyback', '20% marketing + 50% burn + 30% DOGE dividends', 'Tax flow accumulates BNB, processes 10% per 60-second cycle with no BNB floor, then routes the auto pool to buyback burn and DOGE holder rewards.'],
+        ['03 Auto buyback', '50% burn + 30% DOGE dividends', 'Tax flow accumulates BNB, processes 10% per 60-second cycle with no BNB floor, then routes the auto pool to buyback burn and DOGE holder rewards.'],
       ],
     },
     projects: {
@@ -574,7 +573,7 @@ const copy = {
       factoryUnset: 'Not configured',
       section01: '01 Basics',
       title: 'Configure a token launch',
-      intro: 'Set the mint parameters, whitelist gate, launch taxes, 20% marketing, and auto buyback dividend flow.',
+      intro: 'Set the mint parameters, whitelist gate, launch taxes, and auto buyback dividend flow.',
       feeBadge: 'Deployment fee 0.005 BNB',
       tokenName: 'Token name',
       tokenNamePlaceholder: 'Enter token name',
@@ -687,9 +686,9 @@ const templateTranslations: Record<Language, Partial<Record<TemplateId, Partial<
     buyback: {
       name: 'Auto Buyback',
       tag: '20/50/30',
-      summary: 'Routes 20% to marketing, 50% to buyback burn, and 30% to DOGE holder dividends.',
+      summary: 'Routes tax flow to 50% buyback burn and 30% DOGE holder dividends.',
       bestFor: 'Whitelist launches, auto buyback tokens, holder reward communities',
-      checks: ['20% marketing', '50% buyback burn', '30% DOGE dividends', 'Whitelist vault'],
+      checks: ['50% buyback burn', '30% DOGE dividends', 'Whitelist vault'],
     },
     nftReward: {
       name: 'Reward Vault',
@@ -1620,10 +1619,6 @@ function HomePage({
           </div>
           <div className="deck-metrics" aria-label="Rocket tokenomics">
             <span>
-              <b>20%</b>
-              Marketing
-            </span>
-            <span>
               <b>50%</b>
               Buyback burn
             </span>
@@ -2260,15 +2255,6 @@ function ProjectDetailPage({
   }
 
   const explorerUrl = `${BNB_CHAIN.blockExplorerUrls[0]}/address/${project.token}`
-  const splitTotal = project.fundFeeBps + project.lpFeeBps + project.dividendFeeBps + project.burnFeeBps
-  const unallocatedBps = Math.max(0, 10_000 - splitTotal)
-  const marketingSplitBps = project.fundFeeBps + unallocatedBps
-  const marketingReceiver =
-    project.platformFeeReceiver &&
-    isAddress(project.platformFeeReceiver) &&
-    project.platformFeeReceiver.toLowerCase() !== ZERO_ADDRESS.toLowerCase()
-      ? project.platformFeeReceiver
-      : project.receiver
   const taxShare = (taxBps: number, shareBps: number) => (taxBps * shareBps) / 10_000
   const visibleTaxPortion = (taxBps: number, splitBps: number) => taxShare(taxBps, splitBps)
   const portionPair = (splitBps: number) =>
@@ -2282,7 +2268,6 @@ function ProjectDetailPage({
     }
 
     const splitSummary = [
-      `${allocation.marketing.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, marketingSplitBps))}`,
       `${allocation.liquidity.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.lpFeeBps))}`,
       `${allocation.rewards.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.dividendFeeBps))}`,
       `${allocation.burn.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.burnFeeBps))}`,
@@ -2376,10 +2361,6 @@ function ProjectDetailPage({
           <DetailRow
             label={language === 'zh' ? '分红间隔' : 'Claim wait'}
             value={`${project.claimWait}s`}
-          />
-          <DetailRow
-            label={text.detail.marketing}
-            value={`${portionPair(marketingSplitBps)} -> ${text.detail.toReceiver(marketingReceiver)}`}
           />
           <DetailRow
             label={text.detail.liquidity}
@@ -2941,11 +2922,6 @@ function LaunchPage({
                 <TaxRing allocation={allocation} language={language} totalLabel={text.launch.totalAllocation} />
                 <div className="fixed-tokenomics">
                   <div>
-                    <span>Marketing route</span>
-                    <strong>20%</strong>
-                    <em>BNB routes to the project receiver wallet.</em>
-                  </div>
-                  <div>
                     <span>Auto buyback burn</span>
                     <strong>50%</strong>
                     <em>BNB buys back ROCKET and sends tokens to the dead address.</em>
@@ -2961,7 +2937,7 @@ function LaunchPage({
                     <em>Each cycle processes 10% of available pending BNB with no minimum BNB floor.</em>
                   </div>
                   <p className={allocationTotal > 100 ? 'tax-warning' : 'tax-note'}>
-                    Fixed project route: 20% marketing, 50% buyback burn, 30% DOGE holder rewards, 0% LP route.
+                    Fixed project route: 50% buyback burn, 30% DOGE holder rewards, 0% LP route.
                   </p>
                 </div>
               </div>
@@ -3056,11 +3032,6 @@ function LaunchPage({
               <span>Auto buyback</span>
               <strong>10%</strong>
               <em>Every 60s with no BNB floor</em>
-            </div>
-            <div>
-              <span>Marketing route</span>
-              <strong>20%</strong>
-              <em>BNB to receiver wallet</em>
             </div>
             <div>
               <span>Burn route</span>
@@ -3320,6 +3291,7 @@ function TaxRing({
   totalLabel: string
 }) {
   let cursor = 0
+  const visibleLegendItems = allocationMeta.filter((item) => item.key !== 'marketing')
   const stops = allocationMeta.map((item) => {
     const start = cursor
     cursor += allocation[item.key]
@@ -3336,7 +3308,7 @@ function TaxRing({
         <span>{totalLabel}</span>
       </div>
       <div className="tax-ring-legend">
-        {allocationMeta.map((item) => {
+        {visibleLegendItems.map((item) => {
           const itemText = allocationTranslations[language][item.key]
 
           return (
@@ -3415,7 +3387,7 @@ function CommunityPage({
         </div>
         <div className="community-badge" aria-label="Rocket community badge">
           <strong>ROCKET</strong>
-          <span>20 marketing | 56 burn | 24 rewards | BSC</span>
+          <span>50 burn | 30 DOGE rewards | BSC</span>
         </div>
       </section>
 
